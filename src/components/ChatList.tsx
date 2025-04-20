@@ -8,7 +8,9 @@ import {
   ListItemAvatar,
   Avatar,
   Badge,
+  Tooltip,
 } from "@mui/material";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import { IChat } from "../types/chat";
 
 interface ChatListProps {
@@ -78,15 +80,29 @@ const ChatList: FC<ChatListProps> = ({
             </ListItemAvatar>
             <ListItemText
               primary={
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: chat.unreadCount > 0 ? 600 : 400,
-                    fontSize: { xs: "0.9rem", sm: "1rem" },
-                  }}
-                >
-                  {chat.groupName}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: chat.unreadCount > 0 ? 600 : 400,
+                      fontSize: { xs: "0.9rem", sm: "1rem" },
+                    }}
+                  >
+                    {chat.groupName}
+                  </Typography>
+                  {chat.muted && (
+                    <Tooltip title="Notifications muted">
+                      <VolumeOffIcon
+                        sx={{
+                          ml: 1,
+                          fontSize: "0.85rem",
+                          color: "#FF6F61",
+                          opacity: 0.8,
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                </Box>
               }
               secondary={
                 <Typography

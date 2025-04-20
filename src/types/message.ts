@@ -22,6 +22,20 @@ export interface IMediaAttachment {
 }
 
 /**
+ * Represents an emoji reaction to a message
+ */
+export interface IReaction {
+  /** Type of emoji reaction */
+  emoji: "❤️" | "👍" | "😂" | "😮" | "😢" | "😡";
+
+  /** User ID who reacted */
+  userId: string;
+
+  /** Timestamp when the reaction was added */
+  timestamp: number;
+}
+
+/**
  * Interface representing a message
  */
 export interface IMessage {
@@ -48,4 +62,7 @@ export interface IMessage {
 
   /** Optional media attachment */
   media?: IMediaAttachment;
+
+  /** Array of reactions to this message */
+  reactions?: IReaction[];
 }

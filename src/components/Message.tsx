@@ -293,6 +293,12 @@ const Message: FC<MessageProps> = ({
             position: "relative",
           }}
         >
+          {message.media && (
+            <Box sx={{ mb: 1 }}>
+              <MediaPreview media={message.media} />
+            </Box>
+          )}
+
           <Typography
             variant="body2"
             sx={{
@@ -304,24 +310,32 @@ const Message: FC<MessageProps> = ({
             {message.text}
           </Typography>
 
-          {message.media && (
-            <Box sx={{ mt: 1 }}>
-              <MediaPreview media={message.media} />
-            </Box>
-          )}
-
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               alignItems: "center",
-              mt: 0.5,
+              position: "relative",
             }}
           >
             {/* Desktop action buttons on hover */}
             {!isMobile && (
               <Fade in={showActions}>
-                <Box sx={{ display: "flex", gap: 0.5 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 0.5,
+                    position: "absolute",
+                    bottom: "100%",
+                    left: 0,
+                    mb: 0.5,
+                    zIndex: 2,
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                    boxShadow: 1,
+                    p: 0.5,
+                  }}
+                >
                   <IconButton
                     size="small"
                     onClick={handleReactionClick}
@@ -329,7 +343,6 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      bgcolor: "background.paper",
                       "&:hover": { bgcolor: "secondary.light" },
                     }}
                   >
@@ -342,7 +355,6 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      bgcolor: "background.paper",
                       "&:hover": { bgcolor: "secondary.light" },
                     }}
                   >
@@ -355,7 +367,6 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      bgcolor: "background.paper",
                       "&:hover": { bgcolor: "secondary.light" },
                     }}
                   >
@@ -368,7 +379,6 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      bgcolor: "background.paper",
                       "&:hover": { bgcolor: "secondary.light" },
                     }}
                   >
@@ -412,7 +422,10 @@ const Message: FC<MessageProps> = ({
                 label={`${emoji} ${count}`}
                 size="small"
                 sx={{
-                  bgcolor: "secondary.main",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "secondary.main",
                   color: "text.primary",
                   fontSize: { xs: "0.7rem", sm: "0.75rem" },
                   height: "auto",
@@ -420,7 +433,13 @@ const Message: FC<MessageProps> = ({
                   px: { xs: 0.5, sm: 0 },
                   borderRadius: "16px",
                   opacity: 0.8,
-                  "&:hover": { opacity: 1 },
+                  "&:hover": {
+                    opacity: 1,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.12)"
+                        : "secondary.light",
+                  },
                   "& .MuiChip-label": { px: 1 },
                 }}
                 onClick={() => handleAddReaction(emoji as IReaction["emoji"])}

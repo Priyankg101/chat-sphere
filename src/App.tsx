@@ -17,7 +17,7 @@ import ChatList from "./components/ChatList";
 import ChatWindow from "./components/ChatWindow";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 import { IChat } from "./types/chat";
-import { IMessage } from "./types/message";
+import { IMessage, IMediaAttachment } from "./types/message";
 import "./styles/global.css";
 
 // Import mock data
@@ -45,7 +45,27 @@ function App() {
 
   // Load mock data
   useEffect(() => {
-    setChats(mockChats as unknown as IChat[]);
+    // Check for muted chats in localStorage
+    const mutedChats = localStorage.getItem("mutedChats");
+    let mutedChatsArray: string[] = [];
+
+    if (mutedChats) {
+      try {
+        mutedChatsArray = JSON.parse(mutedChats) as string[];
+      } catch (error) {
+        console.error("Error parsing muted chats:", error);
+      }
+    }
+
+    // Apply muted status to chats
+    const chatsWithMuteStatus = (mockChats as unknown as IChat[]).map(
+      (chat) => ({
+        ...chat,
+        muted: mutedChatsArray.includes(chat.id),
+      })
+    );
+
+    setChats(chatsWithMuteStatus);
     setMessages(mockMessages as unknown as IMessage[]);
 
     // Select the first chat by default if available
@@ -70,7 +90,7 @@ function App() {
   };
 
   // Handle send message
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = (text: string, media?: IMediaAttachment) => {
     if (!selectedChatId) return;
 
     const newMessage: IMessage = {
@@ -81,6 +101,7 @@ function App() {
       text,
       timestamp: Date.now(),
       isRead: true,
+      ...(media && { media }),
     };
 
     setMessages((prev) => [...prev, newMessage]);
@@ -89,7 +110,13 @@ function App() {
     setChats((prev) =>
       prev.map((chat) =>
         chat.id === selectedChatId
-          ? { ...chat, lastMessage: text, timestamp: Date.now() }
+          ? {
+              ...chat,
+              lastMessage: media
+                ? `${text || ""}${text ? " " : ""}[${media.type}]`
+                : text,
+              timestamp: Date.now(),
+            }
           : chat
       )
     );
@@ -122,6 +149,14 @@ function App() {
   // Toggle drawer
   const toggleDrawer = () => {
     setDrawerOpen((prev) => !prev);
+  };
+
+  // Handle mute toggle
+  const handleMuteToggle = (chatId: string, muted: boolean) => {
+    // Update chat's muted status
+    setChats((prev) =>
+      prev.map((chat) => (chat.id === chatId ? { ...chat, muted } : chat))
+    );
   };
 
   return (
@@ -216,6 +251,7 @@ function App() {
             selectedChat={selectedChat}
             messages={selectedChatMessages}
             onSendMessage={handleSendMessage}
+            onMuteToggle={handleMuteToggle}
           />
         </Box>
       </Box>

@@ -73,10 +73,31 @@ const getTheme = (mode: PaletteMode) => {
       },
     },
     components: {
+      MuiButtonBase: {
+        styleOverrides: {
+          root: {
+            "&:focus": {
+              outline: "none",
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            "&:focus": {
+              outline: "none",
+            },
+          },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
             borderRadius: 8,
+            "&:focus": {
+              outline: "none",
+            },
           },
         },
       },
@@ -88,6 +109,15 @@ const getTheme = (mode: PaletteMode) => {
               mode === "light"
                 ? "0px 2px 8px rgba(0, 0, 0, 0.05)"
                 : "0px 2px 8px rgba(0, 0, 0, 0.2)",
+          },
+        },
+      },
+      MuiCssBaseline: {
+        styleOverrides: {
+          "*": {
+            "&:focus": {
+              outline: "none",
+            },
           },
         },
       },

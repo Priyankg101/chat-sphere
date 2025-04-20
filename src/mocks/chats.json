@@ -6,7 +6,29 @@
     "timestamp": 1718035200000,
     "unreadCount": 3,
     "avatarUrl": null,
-    "participants": ["user1", "user2", "user3", "user4"]
+    "participants": ["user1", "user2", "user3", "user4"],
+    "members": [
+      {
+        "id": "user1",
+        "name": "Jamie Doe",
+        "isAdmin": true
+      },
+      {
+        "id": "user2",
+        "name": "Alex Johnson",
+        "isAdmin": false
+      },
+      {
+        "id": "user3",
+        "name": "Taylor Swift",
+        "isAdmin": false
+      },
+      {
+        "id": "user4",
+        "name": "John Smith",
+        "isAdmin": false
+      }
+    ]
   },
   {
     "id": "chat2",
@@ -15,7 +37,24 @@
     "timestamp": 1718028000000,
     "unreadCount": 0,
     "avatarUrl": null,
-    "participants": ["user1", "user2", "user5"]
+    "participants": ["user1", "user2", "user5"],
+    "members": [
+      {
+        "id": "user1",
+        "name": "Jamie Doe",
+        "isAdmin": false
+      },
+      {
+        "id": "user2",
+        "name": "Alex Johnson",
+        "isAdmin": true
+      },
+      {
+        "id": "user5",
+        "name": "Emma Parker",
+        "isAdmin": false
+      }
+    ]
   },
   {
     "id": "chat3",
@@ -24,6 +63,18 @@
     "timestamp": 1717948800000,
     "unreadCount": 1,
     "avatarUrl": null,
-    "participants": ["user1", "user6"]
+    "participants": ["user1", "user6"],
+    "members": [
+      {
+        "id": "user1",
+        "name": "Jamie Doe",
+        "isAdmin": false
+      },
+      {
+        "id": "user6",
+        "name": "Sarah Johnson",
+        "isAdmin": false
+      }
+    ]
   }
 ]
