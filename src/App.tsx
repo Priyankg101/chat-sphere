@@ -9,6 +9,7 @@ import {
   IconButton,
   useMediaQuery,
   Drawer,
+  Avatar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -25,14 +26,25 @@ import { BackgroundType } from "./components/ChatBackground";
 import ProfileSettings from "./components/ProfileSettings";
 import { IUser } from "./types/user";
 import DirectMessageButton from "./components/DirectMessageButton";
+import logo from "./assets/logo.png";
+import SearchResults from "./components/SearchResults";
+import NameDialog from "./components/NameDialog";
 
 function App() {
   // Theme state
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = useState<"light" | "dark">(
-    prefersDarkMode ? "dark" : "light"
-  );
+  const [mode, setMode] = useState<"light" | "dark">(() => {
+    // Check localStorage first, fallback to system preference
+    const savedMode = localStorage.getItem("themeMode");
+    if (savedMode === "light" || savedMode === "dark") {
+      return savedMode;
+    }
+    return prefersDarkMode ? "dark" : "light";
+  });
   const theme = useMemo(() => getTheme(mode), [mode]);
+
+  // Name dialog state
+  const [showNameDialog, setShowNameDialog] = useState(false);
 
   // Chat background state
   const [chatBackground, setChatBackground] = useState<BackgroundType>("solid");
@@ -68,7 +80,10 @@ function App() {
   // User profile state
   const [currentUser, setCurrentUser] = useState<IUser>(mockUsers[0]);
 
-  // Load mock data
+  // Add new state for search UI
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Load mock data and check for username
   useEffect(() => {
     // Initialize with mock data
     setChats(mockChats);
@@ -76,6 +91,12 @@ function App() {
     // Set first chat as selected by default
     if (mockChats.length > 0) {
       setSelectedChat(mockChats[0]);
+    }
+
+    // Check if username exists in localStorage
+    const userName = localStorage.getItem("userName");
+    if (!userName) {
+      setShowNameDialog(true);
     }
   }, []);
 
@@ -88,7 +109,12 @@ function App() {
 
   // Toggle theme
   const handleThemeToggle = () => {
-    setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+    setMode((prevMode) => {
+      const newMode = prevMode === "light" ? "dark" : "light";
+      // Save to localStorage
+      localStorage.setItem("themeMode", newMode);
+      return newMode;
+    });
   };
 
   // Handle background change
@@ -180,21 +206,40 @@ function App() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
-    if (query && selectedChat) {
-      // Find first message matching query
-      const matchingMessage = messages.find(
-        (msg) =>
-          msg.chatId === selectedChat.id &&
-          msg.text.toLowerCase().includes(query.toLowerCase())
-      );
-
-      if (matchingMessage) {
-        setHighlightedMessageId(matchingMessage.id);
-      } else {
-        setHighlightedMessageId(undefined);
-      }
+    if (query.trim()) {
+      setSearchOpen(true);
     } else {
+      setSearchOpen(false);
       setHighlightedMessageId(undefined);
+    }
+  };
+
+  // Clear search query
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSearchOpen(false);
+    setHighlightedMessageId(undefined);
+  };
+
+  // Close search results
+  const handleCloseSearch = () => {
+    setSearchOpen(false);
+  };
+
+  // Handle selecting a search result
+  const handleSelectSearchResult = (messageId: string, chatId: string) => {
+    // Find the chat
+    const chat = chats.find((c) => c.id === chatId);
+
+    if (chat) {
+      // Set the active chat
+      handleSelectChat(chat);
+
+      // Highlight the message
+      setHighlightedMessageId(messageId);
+
+      // Close search results (optional, can keep open if preferred)
+      setSearchOpen(false);
     }
   };
 
@@ -315,9 +360,57 @@ function App() {
     }
   };
 
+  // Handle user name submission
+  const handleNameSubmit = (name: string) => {
+    localStorage.setItem("userName", name);
+    setShowNameDialog(false);
+
+    // Update current user name
+    setCurrentUser((prev) => ({
+      ...prev,
+      name,
+    }));
+  };
+
+  // Add the handleDeleteMessage handler function
+  const handleDeleteMessage = (
+    messageId: string,
+    deleteType: "me" | "everyone"
+  ) => {
+    // Get the message first
+    const messageToDelete = messages.find((msg) => msg.id === messageId);
+    if (!messageToDelete) return;
+
+    if (deleteType === "everyone") {
+      // Only the sender can delete for everyone
+      if (messageToDelete.senderId === "user1") {
+        setMessages((prevMessages) =>
+          prevMessages.map((message) =>
+            message.id === messageId ? { ...message, isDeleted: true } : message
+          )
+        );
+      }
+    } else {
+      // Delete for me - either hide it completely or mark as deleted for this user
+      setMessages((prevMessages) =>
+        prevMessages.map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                deletedFor: [...(message.deletedFor || []), "user1"],
+              }
+            : message
+        )
+      );
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+
+      {/* Name Dialog */}
+      <NameDialog open={showNameDialog} onSubmit={handleNameSubmit} />
 
       {/* App Bar */}
       <AppBar
@@ -335,9 +428,21 @@ function App() {
             {drawerOpen ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
 
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ChatSphere
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <Avatar
+              src={logo}
+              alt="ChatSphere Logo"
+              sx={{
+                width: 36,
+                height: 36,
+                mr: 1,
+                bgcolor: "background.paper",
+              }}
+            />
+            <Typography variant="h6" component="div">
+              ChatSphere
+            </Typography>
+          </Box>
 
           <ProfileSettings
             currentUser={currentUser}
@@ -375,14 +480,26 @@ function App() {
           }}
         >
           <Toolbar />
-          <ChatList
-            chats={chats}
-            onSelectChat={handleSelectChat}
-            selectedChat={selectedChat}
-            onSearch={handleSearch}
-            searchQuery={searchQuery}
-            onCreateChat={handleCreateChat}
-          />
+          {searchOpen ? (
+            <SearchResults
+              searchQuery={searchQuery}
+              onClose={handleCloseSearch}
+              chats={chats}
+              messages={messages}
+              onSelectResult={handleSelectSearchResult}
+              onClearSearch={handleClearSearch}
+              onUpdateQuery={setSearchQuery}
+            />
+          ) : (
+            <ChatList
+              chats={chats}
+              onSelectChat={handleSelectChat}
+              selectedChat={selectedChat}
+              onSearch={handleSearch}
+              searchQuery={searchQuery}
+              onCreateChat={handleCreateChat}
+            />
+          )}
         </Drawer>
 
         {/* Main Content */}
@@ -408,6 +525,7 @@ function App() {
             highlightedMessageId={highlightedMessageId}
             onForwardMessage={handleForwardMessage}
             onSaveMessage={handleSaveMessage}
+            onDeleteMessage={handleDeleteMessage}
             onSetActiveChat={(chatId) => {
               const chat = chats.find((c) => c.id === chatId);
               if (chat) {

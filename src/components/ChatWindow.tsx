@@ -11,6 +11,9 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  Chip,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -20,6 +23,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { IChat } from "../types/chat";
 import { IMessage, IMediaAttachment } from "../types/message";
 import Message from "./Message";
@@ -31,6 +35,7 @@ import SavedMessages from "./SavedMessages";
 import ChatBackground, { BackgroundType } from "./ChatBackground";
 import AvatarPreview from "./AvatarPreview";
 import { mockUsers } from "../mockData";
+import { aiGenerateReplies } from "../utils/ai";
 
 interface ChatWindowProps {
   selectedChat?: IChat;
@@ -45,6 +50,7 @@ interface ChatWindowProps {
   highlightedMessageId?: string;
   onForwardMessage?: (messageId: string, targetChatId: string) => void;
   onSaveMessage?: (messageId: string, isSaved: boolean) => void;
+  onDeleteMessage?: (messageId: string, deleteType: "me" | "everyone") => void;
   onSetActiveChat?: (chatId: string) => void;
   backgroundType?: BackgroundType;
   onHighlightMessage?: (messageId: string) => void;
@@ -60,6 +66,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   highlightedMessageId,
   onForwardMessage = () => {},
   onSaveMessage = () => {},
+  onDeleteMessage = () => {},
   onSetActiveChat = () => {},
   backgroundType = "solid",
   onHighlightMessage = () => {},
@@ -68,6 +75,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const [newMessage, setNewMessage] = useState("");
   const [mediaAttachment, setMediaAttachment] =
     useState<IMediaAttachment | null>(null);
+  const [viewOnceEnabled, setViewOnceEnabled] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
@@ -83,6 +91,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
     null
   );
   const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -141,63 +150,157 @@ const ChatWindow: FC<ChatWindowProps> = ({
     setMessageToForward(null);
   }, [selectedChat]);
 
-  // Mock typing indicators
+  // Mock typing indicators - improved to be more realistic
   useEffect(() => {
-    // For both cases (typing or not typing), generate random users
-    // but never include the current user
+    // Clear typing users when chat changes
+    setTypingUsers([]);
 
-    // When user is typing, simulate others typing with higher probability
-    if (isFocused && newMessage) {
-      // Randomly choose one or more users to show as typing
-      const mockTypers = [];
+    if (!selectedChat) return;
 
-      // Alex has a 70% chance of typing when you're typing
-      if (Math.random() < 0.7) {
-        mockTypers.push("Alex");
+    // Only use participants that are actually in the current chat
+    const chatParticipants =
+      selectedChat.members
+        ?.filter((member) => member.id !== "user1") // Don't include current user
+        ?.map((member) => member.name) || [];
+
+    if (chatParticipants.length === 0) return;
+
+    // Don't show typing indicators when focus is on input
+    // This makes it more random and natural
+    if (isFocused) return;
+
+    // For individual chats, only the other person should be typing
+    if (selectedChat.type === "individual") {
+      // 15% chance the person will start typing
+      const shouldType = Math.random() < 0.15;
+
+      if (shouldType) {
+        // The other person in the chat
+        const otherPerson = chatParticipants[0];
+
+        // Set typing indicator with a delayed timer
+        const startTypingDelay = Math.floor(Math.random() * 5000) + 2000;
+        const typingTimer = setTimeout(() => {
+          setTypingUsers([otherPerson]);
+
+          // Clear typing after 2-4 seconds
+          const typingDuration = Math.floor(Math.random() * 2000) + 2000;
+          setTimeout(() => {
+            setTypingUsers([]);
+          }, typingDuration);
+        }, startTypingDelay);
+
+        return () => clearTimeout(typingTimer);
       }
+    }
+    // For group chats, multiple people might be typing
+    else if (selectedChat.type === "group") {
+      // 20% chance someone will start typing
+      const shouldAnybodyType = Math.random() < 0.2;
 
-      // Taylor has a 40% chance of typing when you're typing
-      if (Math.random() < 0.4) {
-        mockTypers.push("Taylor");
+      if (shouldAnybodyType) {
+        // Get 1-2 random participants (never more than the actual participants)
+        const maxTypers = Math.min(2, chatParticipants.length);
+        const numberOfTypers = Math.floor(Math.random() * maxTypers) + 1;
+
+        // Randomly select participants
+        const shuffled = [...chatParticipants].sort(() => 0.5 - Math.random());
+        const selectedTypers = shuffled.slice(0, numberOfTypers);
+
+        // Set typing indicator with a random delay
+        const startTypingDelay = Math.floor(Math.random() * 5000) + 2000;
+        const typingTimer = setTimeout(() => {
+          setTypingUsers(selectedTypers);
+
+          // Clear typing after 3-6 seconds
+          const typingDuration = Math.floor(Math.random() * 3000) + 3000;
+          setTimeout(() => {
+            setTypingUsers([]);
+          }, typingDuration);
+        }, startTypingDelay);
+
+        return () => clearTimeout(typingTimer);
       }
-
-      // John has a 20% chance of typing when you're typing
-      if (Math.random() < 0.2) {
-        mockTypers.push("John");
-      }
-
-      setTypingUsers(mockTypers);
-      return;
     }
 
-    // Randomly simulate users typing with a timer when not typing
-    const randomInterval = Math.floor(Math.random() * 10000) + 5000;
+    // Set up a periodic check for random typing
+    const periodicCheck = setInterval(() => {
+      // For individual chats
+      if (selectedChat.type === "individual") {
+        // 10% chance to start typing every 20-30 seconds
+        if (Math.random() < 0.1) {
+          setTypingUsers([chatParticipants[0]]);
 
-    const timer = setTimeout(() => {
-      if (selectedChat) {
-        const randomUsers = [];
-        const userCount = Math.floor(Math.random() * 3) + 1; // 1-3 users
-
-        // Never include the current user (Jamie Doe)
-        const possibleUsers = ["Alex", "Taylor", "John", "Emma", "Michael"];
-        for (let i = 0; i < userCount; i++) {
-          const randomIndex = Math.floor(Math.random() * possibleUsers.length);
-          randomUsers.push(possibleUsers[randomIndex]);
-          possibleUsers.splice(randomIndex, 1); // Remove this user so we don't pick them again
+          // Clear typing after 2-4 seconds
+          const typingDuration = Math.floor(Math.random() * 2000) + 2000;
+          setTimeout(() => {
+            setTypingUsers([]);
+          }, typingDuration);
         }
-
-        setTypingUsers(randomUsers);
-
-        // Clear typing indicator after 2-5 seconds
-        const typingDuration = Math.floor(Math.random() * 3000) + 2000;
-        setTimeout(() => {
-          setTypingUsers([]);
-        }, typingDuration);
       }
-    }, randomInterval);
+      // For group chats
+      else if (selectedChat.type === "group" && chatParticipants.length > 1) {
+        // 15% chance someone will start typing every 20-30 seconds
+        if (Math.random() < 0.15) {
+          // Get 1-2 random participants
+          const maxTypers = Math.min(2, chatParticipants.length);
+          const numberOfTypers = Math.floor(Math.random() * maxTypers) + 1;
 
-    return () => clearTimeout(timer);
-  }, [isFocused, newMessage, selectedChat]);
+          // Randomly select participants
+          const shuffled = [...chatParticipants].sort(
+            () => 0.5 - Math.random()
+          );
+          const selectedTypers = shuffled.slice(0, numberOfTypers);
+
+          setTypingUsers(selectedTypers);
+
+          // Clear typing after 3-6 seconds
+          const typingDuration = Math.floor(Math.random() * 3000) + 3000;
+          setTimeout(() => {
+            setTypingUsers([]);
+          }, typingDuration);
+        }
+      }
+    }, Math.floor(Math.random() * 10000) + 20000); // Check every 20-30 seconds
+
+    return () => {
+      clearInterval(periodicCheck);
+    };
+  }, [selectedChat, isFocused]);
+
+  // Generate smart replies when selected chat or messages change
+  useEffect(() => {
+    const generateSmartReplies = async () => {
+      if (!selectedChat || messages.length === 0) {
+        setSmartReplies([]);
+        return;
+      }
+
+      // Get the last message that isn't from the current user
+      const lastOtherUserMessage = [...messages]
+        .reverse()
+        .find((msg) => msg.senderId !== "user1");
+
+      if (lastOtherUserMessage) {
+        try {
+          const replies = await aiGenerateReplies(lastOtherUserMessage.text);
+          setSmartReplies(replies);
+        } catch (error) {
+          console.error("Error generating smart replies:", error);
+          setSmartReplies(["Got it", "Thanks", "I understand"]);
+        }
+      }
+    };
+
+    generateSmartReplies();
+  }, [selectedChat, messages]);
+
+  // Clear smart replies when user starts typing
+  useEffect(() => {
+    if (newMessage.trim() !== "") {
+      setSmartReplies([]);
+    }
+  }, [newMessage]);
 
   const handleSendMessage = () => {
     if ((newMessage.trim() !== "" || mediaAttachment) && selectedChat) {
@@ -225,6 +328,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
 
       setNewMessage("");
       setMediaAttachment(null);
+      setViewOnceEnabled(false);
       setReplyToMessage(null);
       setTypingUsers([]); // Clear typing indicators when sending a message
     }
@@ -316,12 +420,36 @@ const ChatWindow: FC<ChatWindowProps> = ({
         url: result,
         name: file.name,
         size: file.size,
+        viewOnce:
+          viewOnceEnabled && (mediaType === "image" || mediaType === "video"),
       });
     };
     reader.readAsDataURL(file);
 
     // Reset the input so the same file can be selected again
     event.target.value = "";
+  };
+
+  // Toggle view once option (only for image/video)
+  const handleViewOnceToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setViewOnceEnabled(event.target.checked);
+
+    // Update existing attachment if there is one
+    if (
+      mediaAttachment &&
+      (mediaAttachment.type === "image" || mediaAttachment.type === "video")
+    ) {
+      setMediaAttachment({
+        ...mediaAttachment,
+        viewOnce: event.target.checked,
+      });
+    }
+  };
+
+  // Handle when view-once media is viewed
+  const handleMediaViewed = () => {
+    // We could update the UI or notify the user here if needed
+    console.log("View-once media has been viewed");
   };
 
   const handlePinMessage = (messageId: string, isPinned: boolean) => {
@@ -455,6 +583,13 @@ const ChatWindow: FC<ChatWindowProps> = ({
 
   // Get avatar info for preview
   const avatarInfo = getChatAvatarInfo();
+
+  // Add handler for smart reply clicks
+  const handleSmartReplyClick = (reply: string) => {
+    setNewMessage(reply);
+    // Optional: auto-send the message
+    // setTimeout(() => handleSendMessage(), 100);
+  };
 
   return (
     <Box
@@ -690,13 +825,39 @@ const ChatWindow: FC<ChatWindowProps> = ({
               <Box
                 key={msg.id}
                 id={`message-${msg.id}`}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  position: "relative",
+                  ...(msg.id === highlightedMessageId && {
+                    scrollMarginTop: "120px",
+                    scrollMarginBottom: "120px",
+                  }),
+                }}
                 className={
                   msg.id === lastSentMessageId && msg.senderId === "user1"
                     ? "messageAnimation"
                     : ""
                 }
               >
+                {msg.id === highlightedMessageId && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: -8,
+                      left: -8,
+                      right: -8,
+                      bottom: -8,
+                      borderRadius: 2,
+                      border: "2px solid",
+                      borderColor: "primary.main",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(38, 166, 154, 0.08)"
+                          : "rgba(38, 166, 154, 0.04)",
+                      zIndex: -1,
+                    }}
+                  />
+                )}
                 <Message
                   message={msg}
                   isCurrentUser={msg.senderId === "user1"}
@@ -704,10 +865,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
                   onReply={handleReply}
                   onForward={handleForward}
                   onSave={handleSave}
+                  onDelete={onDeleteMessage}
                   isPinned={pinnedMessage?.id === msg.id}
                   isHighlighted={highlightedMessageId === msg.id}
                   replyToMessage={getReplyToMessage(msg.replyToId)}
                   onStartDirectChat={handleStartDirectChat}
+                  onMediaViewed={handleMediaViewed}
                 />
               </Box>
             ))}
@@ -720,6 +883,54 @@ const ChatWindow: FC<ChatWindowProps> = ({
             {/* Empty div for scrolling to bottom */}
             <div ref={messagesEndRef} />
           </Box>
+
+          {/* Smart Reply Suggestions */}
+          {selectedChat && smartReplies.length > 0 && (
+            <Box
+              sx={{
+                px: 2,
+                pb: 0.75,
+                pt: 0.75,
+                bgcolor: "transparent",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 0.75,
+                  justifyContent: "flex-start",
+                  flexWrap: "wrap",
+                }}
+              >
+                {smartReplies.map((reply, index) => (
+                  <Chip
+                    key={index}
+                    label={reply}
+                    size="small"
+                    onClick={() => handleSmartReplyClick(reply)}
+                    sx={{
+                      bgcolor: "rgba(38, 166, 154, 0.08)",
+                      color: "primary.main",
+                      fontSize: "0.75rem",
+                      height: "28px",
+                      border: "1px solid rgba(38, 166, 154, 0.2)",
+                      "& .MuiChip-label": {
+                        px: 1,
+                      },
+                      "&:hover": {
+                        bgcolor: "rgba(38, 166, 154, 0.15)",
+                        borderColor: "rgba(38, 166, 154, 0.3)",
+                      },
+                      transition: "all 0.2s ease",
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          )}
 
           {/* Input Area */}
           <Box
@@ -744,32 +955,121 @@ const ChatWindow: FC<ChatWindowProps> = ({
               <Box
                 sx={{
                   mb: 2,
-                  p: 1,
+                  p: 1.5,
                   borderRadius: 1,
-                  bgcolor: "secondary.light",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "secondary.light",
                   display: "flex",
-                  alignItems: "center",
+                  flexDirection: "column",
+                  alignItems: "stretch",
                   justifyContent: "space-between",
+                  border: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "1px solid rgba(255, 255, 255, 0.15)"
+                      : "none",
                 }}
               >
-                <Typography variant="body2">
-                  {mediaAttachment.name}{" "}
-                  {mediaAttachment.size && (
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      ({(mediaAttachment.size / 1024).toFixed(0)} KB)
-                    </Typography>
-                  )}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => setMediaAttachment(null)}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: (theme) => theme.palette.text.primary,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {mediaAttachment.name}{" "}
+                    {mediaAttachment.size && (
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        sx={{
+                          color: (theme) => theme.palette.text.secondary,
+                          ml: 0.5,
+                        }}
+                      >
+                        ({(mediaAttachment.size / 1024).toFixed(0)} KB)
+                      </Typography>
+                    )}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setMediaAttachment(null)}
+                    sx={{
+                      color: (theme) => theme.palette.text.primary,
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "rgba(0, 0, 0, 0.08)",
+                      },
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+
+                {(mediaAttachment.type === "image" ||
+                  mediaAttachment.type === "video") && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mt: 1.5,
+                      borderTop: 1,
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(255, 255, 255, 0.12)"
+                          : "rgba(0, 0, 0, 0.08)",
+                      pt: 1,
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          size="small"
+                          checked={
+                            viewOnceEnabled || Boolean(mediaAttachment.viewOnce)
+                          }
+                          onChange={handleViewOnceToggle}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <VisibilityOffIcon
+                            sx={{
+                              fontSize: 16,
+                              mr: 0.5,
+                              color: (theme) => theme.palette.text.secondary,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: (theme) => theme.palette.text.secondary,
+                            }}
+                          >
+                            View once
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{
+                        margin: 0,
+                        "& .MuiFormControlLabel-label": {
+                          fontSize: "0.75rem",
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
               </Box>
             )}
 

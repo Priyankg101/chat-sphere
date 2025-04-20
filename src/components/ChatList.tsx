@@ -1,4 +1,4 @@
-import { FC, useState, useMemo } from "react";
+import { FC, useState, useMemo, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -11,11 +11,13 @@ import {
   Tooltip,
   TextField,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import SearchIcon from "@mui/icons-material/Search";
 import GroupIcon from "@mui/icons-material/Group";
 import PersonIcon from "@mui/icons-material/Person";
+import CloseIcon from "@mui/icons-material/Close";
 import { IChat } from "../types/chat";
 import { formatDistanceToNow } from "date-fns";
 import NewChatMenu from "./NewChatMenu";
@@ -43,6 +45,9 @@ const ChatList: FC<ChatListProps> = ({
   const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
   const [selectedChatForPreview, setSelectedChatForPreview] =
     useState<IChat | null>(null);
+
+  // Add debounce timer reference
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use either the external search query or the local one
   const effectiveSearchQuery = searchQuery || localSearchQuery;
@@ -171,7 +176,32 @@ const ChatList: FC<ChatListProps> = ({
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = event.target.value;
     setLocalSearchQuery(newQuery);
-    onSearch(newQuery);
+
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set a new timer (300ms debounce)
+    debounceTimerRef.current = setTimeout(() => {
+      // Update the search query after the debounce period
+      onSearch(newQuery);
+    }, 300);
+  };
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Add a function to clear the search
+  const handleClearSearch = () => {
+    setLocalSearchQuery("");
+    onSearch("");
   };
 
   // Get avatar preview data
@@ -214,6 +244,19 @@ const ChatList: FC<ChatListProps> = ({
                 <SearchIcon color="action" />
               </InputAdornment>
             ),
+            endAdornment: effectiveSearchQuery ? (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={handleClearSearch}
+                  edge="end"
+                  aria-label="clear search"
+                  sx={{ mr: -0.5 }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
             sx: {
               borderRadius: 2,
               px: 1,
@@ -306,6 +349,7 @@ const ChatList: FC<ChatListProps> = ({
                   >
                     <Typography
                       variant="subtitle1"
+                      component="div"
                       sx={{
                         fontWeight: chat.unreadCount ? 600 : 400,
                         fontSize: { xs: "0.9rem", sm: "1rem" },
@@ -362,6 +406,7 @@ const ChatList: FC<ChatListProps> = ({
                     )}
                     <Typography
                       variant="body2"
+                      component="div"
                       color="text.secondary"
                       sx={{
                         fontWeight: chat.unreadCount ? 500 : 400,

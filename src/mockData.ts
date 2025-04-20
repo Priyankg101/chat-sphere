@@ -494,3 +494,71 @@ export const mockUsers: IUser[] = [
 
 // Mark the first chat as being selected by default
 localStorage.setItem(`pinned_message_${chatIds.general}`, "pinned-msg-1");
+
+/**
+ * Pre-defined message summaries for long messages
+ */
+export const mockMessageSummaries: Record<string, string> = {
+  "message-1": "Discussion about project timeline and upcoming deadlines.",
+  "message-5": "Plans for team meeting and review of recent progress.",
+  "message-12":
+    "Questions about technical implementation details and potential solutions.",
+  "message-17": "Update on client feedback and suggestions for improvement.",
+  "message-25": "Weekend plans and coordination for next week's activities.",
+  "message-38": "Information about system requirements and deployment process.",
+};
+
+/**
+ * Smart reply suggestions based on the last message in a conversation
+ */
+export const mockSmartReplies: Record<string, string[]> = {
+  // Greetings
+  "Hey there! How's it going?": [
+    "I'm good, thanks!",
+    "Great! How are you?",
+    "Doing well, just busy with work.",
+  ],
+  "Hi everyone": ["Hey team!", "Hello!", "Hi there, how's everyone doing?"],
+
+  // Questions
+  "Do you have time for a quick call?": [
+    "Sure, I'm free now",
+    "How about in 30 minutes?",
+    "I'm available after 2pm",
+  ],
+  "What do you think about the new design?": [
+    "Looks great!",
+    "I like it, but have a few suggestions",
+    "It's a good start",
+  ],
+  "When is the deadline for this project?": [
+    "End of this week",
+    "Let me check and get back to you",
+    "I believe it's Friday",
+  ],
+
+  // Project related
+  "I've pushed the changes to the repo": [
+    "Thanks for the update",
+    "I'll take a look",
+    "Any issues I should know about?",
+  ],
+  "The client requested some revisions to the UI": [
+    "What kind of changes?",
+    "Let's discuss it tomorrow",
+    "I can start working on it",
+  ],
+
+  // General responses
+  "Thanks for your help!": ["No problem!", "Happy to help", "Anytime!"],
+  "Sorry I'll be late to the meeting": [
+    "No worries",
+    "Thanks for letting us know",
+    "We'll wait for you",
+  ],
+  "Look at this article I found": [
+    "Interesting!",
+    "Thanks for sharing",
+    "I'll check it out",
+  ],
+};

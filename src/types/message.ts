@@ -19,6 +19,9 @@ export interface IMediaAttachment {
 
   /** Optional height (for images/videos) */
   height?: number;
+
+  /** Whether this media can only be viewed once */
+  viewOnce?: boolean;
 }
 
 /**
@@ -86,6 +89,9 @@ export interface IMessage {
   /** When message was saved (timestamp) */
   savedAt?: number;
 
+  /** Optional summary of the message content */
+  summary?: string;
+
   /** Optional forwarded info */
   forwardedFrom?: {
     chatId: string;
@@ -93,4 +99,10 @@ export interface IMessage {
     messageId: string;
     senderName: string;
   };
+
+  /** Whether the message has been deleted for everyone */
+  isDeleted?: boolean;
+
+  /** Array of user IDs for whom this message is deleted */
+  deletedFor?: string[];
 }

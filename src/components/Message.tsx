@@ -18,6 +18,16 @@ import {
   ListItemText,
   Popover,
   useTheme,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Menu,
+  MenuItem,
+  ListItemButton,
+  keyframes,
 } from "@mui/material";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
 import ReplyIcon from "@mui/icons-material/Reply";
@@ -26,6 +36,10 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import DoneIcon from "@mui/icons-material/Done";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import PushPinIcon from "@mui/icons-material/PushPin";
+import DescriptionIcon from "@mui/icons-material/Description";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { IMessage, IReaction, MessageStatus } from "../types/message";
 import MediaPreview from "./MediaPreview";
 import ReplyMessageContent from "./ReplyMessageContent";
@@ -33,6 +47,29 @@ import ForwardedMessageInfo from "./ForwardedMessageInfo";
 import AvatarPreview from "./AvatarPreview";
 import UserProfilePopover from "./UserProfilePopover";
 import { mockUsers } from "../mockData";
+import { aiSummarizeMessage } from "../utils/ai";
+
+// Define messageSlideIn animation
+const messageSlideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+interface IUserData {
+  id: string;
+  name: string;
+  avatar?: string;
+  status?: string;
+  email?: string;
+  lastSeen?: number;
+  isOnline?: boolean;
+}
 
 interface MessageProps {
   message: IMessage;
@@ -42,9 +79,13 @@ interface MessageProps {
   onForward?: (messageId: string) => void;
   onSave?: (messageId: string) => void;
   onPinMessage?: (messageId: string, isPinned: boolean) => void;
+  onDelete?: (messageId: string, deleteType: "me" | "everyone") => void;
   isHighlighted?: boolean;
   replyToMessage?: IMessage | null;
   onStartDirectChat?: (userId: string) => void;
+  showAvatar?: boolean;
+  onMediaViewed?: () => void;
+  lastSentMessageId?: string | null;
 }
 
 // Define available emoji reactions
@@ -73,9 +114,12 @@ const Message: FC<MessageProps> = ({
   onForward = () => {},
   onSave = () => {},
   onPinMessage = () => {},
+  onDelete = () => {},
   isHighlighted = false,
   replyToMessage = null,
   onStartDirectChat = () => {},
+  onMediaViewed = () => {},
+  lastSentMessageId,
 }) => {
   // Use refs for various DOM elements
   const messageRef = useRef<HTMLDivElement>(null);
@@ -93,17 +137,15 @@ const Message: FC<MessageProps> = ({
   const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
   const [profilePopoverAnchor, setProfilePopoverAnchor] =
     useState<HTMLElement | null>(null);
-  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [currentUserData, setCurrentUserData] = useState<IUserData | null>(
+    null
+  );
 
   // Mobile-specific state
   const [touchTimer, setTouchTimer] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
-
-  // Visual effect states
-  const [isBlinking, setIsBlinking] = useState(isHighlighted);
-  const [blinkCount, setBlinkCount] = useState(0);
 
   // Get browser window width
   const theme = useTheme();
@@ -126,6 +168,21 @@ const Message: FC<MessageProps> = ({
 
   // Add a timeout ref to manage the avatar hover timeout
   const avatarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Add summarization state variables
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [messageSummary, setMessageSummary] = useState<string | null>(null);
+
+  // Add delete handlers
+  const [deleteAnchorEl, setDeleteAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+
+  // Check if message is deleted
+  const isDeletedForMe = message.deletedFor?.includes("user1");
+  const isDeletedForEveryone = message.isDeleted === true;
+  const isMessageDeleted = isDeletedForEveryone || isDeletedForMe;
 
   // Mock status changes for current user's messages
   useEffect(() => {
@@ -204,28 +261,6 @@ const Message: FC<MessageProps> = ({
   useEffect(() => {
     localStorage.setItem(`reactions_${message.id}`, JSON.stringify(reactions));
   }, [reactions, message.id]);
-
-  // Handle blinking effect when a message is highlighted from search results
-  useEffect(() => {
-    if (isHighlighted) {
-      // Scroll the message into view
-      messageRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-
-      // Start blinking effect
-      setBlinkCount(4); // 2 complete blink cycles
-      setIsBlinking(true);
-
-      // Set up timer to stop blinking after all cycles complete
-      const timer = setTimeout(() => {
-        setIsBlinking(false);
-      }, 1200); // 4 * 300ms = 1200ms total for all blinks
-
-      return () => clearTimeout(timer);
-    }
-  }, [isHighlighted]);
 
   // Handle mobile touch interactions
   const handleTouchStart = () => {
@@ -335,13 +370,17 @@ const Message: FC<MessageProps> = ({
   };
 
   const handleMobilePin = () => {
-    handlePinMessage();
     setMobileActionsOpen(false);
+    onPinMessage(message.id, !isPinned);
+  };
+
+  const handleMobileSummarize = () => {
+    setMobileActionsOpen(false);
+    handleSummarize();
   };
 
   // Handle pin message action
   const handlePinMessage = () => {
-    // Toggle pinned status using the prop value from parent
     onPinMessage(message.id, !isPinned);
   };
 
@@ -440,6 +479,61 @@ const Message: FC<MessageProps> = ({
     };
   }, []);
 
+  // Handle summarize button click
+  const handleSummarize = async () => {
+    if (message.summary) {
+      // If we already have a summary, just show it
+      setMessageSummary(message.summary);
+
+      // If summary is long, show in dialog, otherwise tooltip will display it
+      if (message.summary.length > 80) {
+        setSummaryDialogOpen(true);
+      }
+      return;
+    }
+
+    // Otherwise generate a new summary
+    setIsSummarizing(true);
+    try {
+      const summary = await aiSummarizeMessage(message.text, message.id);
+      setMessageSummary(summary);
+
+      // Also cache the summary in the message object
+      message.summary = summary;
+
+      // If summary is long, show in dialog
+      if (summary.length > 80) {
+        setSummaryDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Error summarizing message:", error);
+      // Use fallback
+      const fallbackSummary = message.text.substring(0, 50) + "...";
+      setMessageSummary(fallbackSummary);
+      message.summary = fallbackSummary;
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  // Close summary dialog
+  const handleCloseSummaryDialog = () => {
+    setSummaryDialogOpen(false);
+  };
+
+  // Add delete handlers
+  const handleDeleteForMe = () => {
+    onDelete(message.id, "me");
+    setMobileActionsOpen(false);
+    setDeleteAnchorEl(null); // Close the delete menu
+  };
+
+  const handleDeleteForEveryone = () => {
+    onDelete(message.id, "everyone");
+    setMobileActionsOpen(false);
+    setDeleteAnchorEl(null); // Close the delete menu
+  };
+
   return (
     <Box
       sx={{
@@ -501,6 +595,10 @@ const Message: FC<MessageProps> = ({
           display: "flex",
           flexDirection: "column",
           alignItems: isCurrentUser ? "flex-end" : "flex-start",
+          position: "relative",
+          width: "auto",
+          maxWidth: "80%",
+          overflow: "visible",
         }}
       >
         {!isCurrentUser && (
@@ -519,46 +617,49 @@ const Message: FC<MessageProps> = ({
         <Paper
           elevation={1}
           ref={messageRef}
-          onMouseEnter={() => !isMobile && setShowActions(true)}
+          onMouseEnter={() =>
+            !isMobile && !isMessageDeleted && setShowActions(true)
+          }
           onMouseLeave={() => !isMobile && setShowActions(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
           sx={{
             p: 1.5,
-            borderRadius: 2,
-            bgcolor: isBlinking
-              ? blinkCount % 2 === 0
-                ? "#FF6F61"
-                : "background.paper"
-              : isCurrentUser
-              ? "#26A69A"
-              : "background.paper",
-            color: isBlinking
-              ? blinkCount % 2 === 0
-                ? "white"
-                : "text.primary"
-              : isCurrentUser
-              ? "white"
-              : "text.primary",
             maxWidth: "100%",
+            minWidth: "30px",
+            wordBreak: "break-word",
+            borderRadius: 2,
+            transition: "background-color 0.2s",
             position: "relative",
-            transition:
-              "background-color 300ms ease, color 300ms ease, transform 200ms ease-out",
-            ...(isPinned && {
-              border: "1px solid #26A69A",
-            }),
-            ...(message.isSaved && {
-              borderRight: "3px solid #FFC107",
-            }),
-            boxShadow: isCurrentUser
-              ? "0 1px 2px rgba(38, 166, 154, 0.3)"
-              : "0 1px 2px rgba(0, 0, 0, 0.1)",
-            "&:hover": {
-              boxShadow: isCurrentUser
-                ? "0 3px 6px rgba(38, 166, 154, 0.4)"
-                : "0 3px 6px rgba(0, 0, 0, 0.15)",
-            },
+            bgcolor: isMessageDeleted
+              ? theme.palette.mode === "dark"
+                ? "rgba(64, 64, 64, 0.5)"
+                : "rgba(240, 240, 240, 0.5)"
+              : isCurrentUser
+              ? theme.palette.primary.main
+              : theme.palette.background.paper,
+            color: isMessageDeleted
+              ? theme.palette.text.secondary
+              : isCurrentUser
+              ? "#fff"
+              : theme.palette.text.primary,
+            borderTopRightRadius: isCurrentUser ? 4 : 20,
+            borderTopLeftRadius: isCurrentUser ? 20 : 4,
+            borderBottomRightRadius: 20,
+            borderBottomLeftRadius: 20,
+            mr: isCurrentUser ? 1 : 0,
+            ml: isCurrentUser ? 0 : 1,
+            boxShadow: isHighlighted
+              ? `0 0 0 2px ${theme.palette.warning.main}`
+              : isPinned
+              ? `0 0 0 1px ${theme.palette.primary.main}`
+              : 1,
+            animation:
+              lastSentMessageId === message.id
+                ? `${messageSlideIn} 0.3s ease-out`
+                : "none",
+            opacity: isMessageDeleted ? 0.8 : 1,
           }}
         >
           {/* Forwarded message info */}
@@ -579,20 +680,38 @@ const Message: FC<MessageProps> = ({
 
           {message.media && (
             <Box sx={{ mb: 1 }}>
-              <MediaPreview media={message.media} />
+              <MediaPreview
+                media={message.media}
+                onMediaViewed={onMediaViewed}
+              />
             </Box>
           )}
 
-          <Typography
-            variant="body2"
-            sx={{
-              wordBreak: "break-word",
-              whiteSpace: "pre-wrap",
-              fontSize: { xs: "0.85rem", sm: "0.95rem" },
-            }}
-          >
-            {message.text}
-          </Typography>
+          {isMessageDeleted ? (
+            <Typography
+              variant="body2"
+              sx={{
+                fontStyle: "italic",
+                color: "text.disabled",
+                fontSize: { xs: "0.8rem", sm: "0.9rem" },
+              }}
+            >
+              {isDeletedForEveryone
+                ? "This message was deleted"
+                : "You deleted this message"}
+            </Typography>
+          ) : (
+            <Typography
+              variant="body2"
+              sx={{
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
+                fontSize: { xs: "0.85rem", sm: "0.95rem" },
+              }}
+            >
+              {message.text}
+            </Typography>
+          )}
 
           <Box
             sx={{
@@ -603,7 +722,7 @@ const Message: FC<MessageProps> = ({
             }}
           >
             {/* Desktop action buttons on hover */}
-            {!isMobile && (
+            {!isMobile && !isMessageDeleted && (
               <Fade in={showActions}>
                 <Box
                   sx={{
@@ -613,11 +732,14 @@ const Message: FC<MessageProps> = ({
                     bottom: "100%",
                     left: 0,
                     mb: 0.5,
-                    zIndex: 2,
+                    zIndex: 10,
                     bgcolor: "background.paper",
                     borderRadius: 1,
                     boxShadow: 1,
                     p: 0.5,
+                    minWidth: "fit-content",
+                    whiteSpace: "nowrap",
+                    overflow: "visible",
                   }}
                 >
                   <IconButton
@@ -627,7 +749,16 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      "&:hover": { bgcolor: "secondary.light" },
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
                     }}
                   >
                     <AddReactionIcon fontSize="small" />
@@ -639,7 +770,16 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      "&:hover": { bgcolor: "secondary.light" },
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
                     }}
                   >
                     <ReplyIcon fontSize="small" />
@@ -651,22 +791,105 @@ const Message: FC<MessageProps> = ({
                       p: 0.5,
                       fontSize: "0.75rem",
                       color: "text.secondary",
-                      "&:hover": { bgcolor: "secondary.light" },
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
                     }}
                   >
                     <ForwardIcon fontSize="small" />
                   </IconButton>
+                  {/* Add Summarize button for messages longer than 100 characters */}
+                  {message.text.length > 100 && (
+                    <Tooltip
+                      title={
+                        isSummarizing
+                          ? "Generating summary..."
+                          : messageSummary && messageSummary.length <= 80
+                          ? messageSummary
+                          : "Summarize"
+                      }
+                      arrow
+                      sx={{
+                        maxWidth: { xs: "100%", md: "600px" },
+                        "& .MuiTooltip-tooltip": {
+                          bgcolor: "#FF6F61",
+                          color: "white",
+                          fontSize: "0.8rem",
+                          px: 1.5,
+                          py: 1,
+                          borderRadius: 1,
+                        },
+                      }}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={handleSummarize}
+                        disabled={isSummarizing}
+                        sx={{
+                          p: 0.5,
+                          fontSize: "0.75rem",
+                          color: (theme) =>
+                            isSummarizing
+                              ? "text.disabled"
+                              : theme.palette.mode === "dark"
+                              ? "#fff"
+                              : theme.palette.text.primary,
+                          "&:hover": {
+                            bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(255, 255, 255, 0.12)"
+                                : "secondary.light",
+                            color: (theme) =>
+                              isSummarizing
+                                ? "text.disabled"
+                                : theme.palette.mode === "dark"
+                                ? "#fff"
+                                : theme.palette.text.primary,
+                          },
+                        }}
+                      >
+                        <DescriptionIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <IconButton
                     size="small"
                     onClick={() => onSave(message.id)}
                     sx={{
                       p: 0.5,
                       fontSize: "0.75rem",
-                      color: message.isSaved ? "#FFC107" : "text.secondary",
-                      "&:hover": { bgcolor: "secondary.light" },
+                      color: (theme) =>
+                        message.isSaved
+                          ? "#FFC107"
+                          : theme.palette.mode === "dark"
+                          ? "#fff"
+                          : theme.palette.text.primary,
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          message.isSaved
+                            ? "#FFC107"
+                            : theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
                     }}
                   >
-                    <BookmarkIcon fontSize="small" />
+                    {message.isSaved ? (
+                      <BookmarkIcon fontSize="small" />
+                    ) : (
+                      <BookmarkBorderIcon fontSize="small" />
+                    )}
                   </IconButton>
                   <IconButton
                     size="small"
@@ -674,11 +897,52 @@ const Message: FC<MessageProps> = ({
                     sx={{
                       p: 0.5,
                       fontSize: "0.75rem",
-                      color: isPinned ? "#26A69A" : "text.secondary",
-                      "&:hover": { bgcolor: "secondary.light" },
+                      color: (theme) =>
+                        isPinned
+                          ? "#26A69A"
+                          : theme.palette.mode === "dark"
+                          ? "#fff"
+                          : theme.palette.text.primary,
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          isPinned
+                            ? "#26A69A"
+                            : theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
                     }}
                   >
                     <PushPinIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Show context menu for delete options
+                      setDeleteAnchorEl(e.currentTarget);
+                    }}
+                    sx={{
+                      p: 0.5,
+                      fontSize: "0.75rem",
+                      color: "text.secondary",
+                      "&:hover": {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(255, 255, 255, 0.12)"
+                            : "secondary.light",
+                        color: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "#fff"
+                            : theme.palette.text.primary,
+                      },
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
                 </Box>
               </Fade>
@@ -736,7 +1000,7 @@ const Message: FC<MessageProps> = ({
                     opacity: 1,
                     bgcolor: (theme) =>
                       theme.palette.mode === "dark"
-                        ? "rgba(255, 255, 255, 0.12)"
+                        ? "rgba(255, 255, 255, 0.16)"
                         : "secondary.light",
                   },
                   "& .MuiChip-label": { px: 1 },
@@ -832,6 +1096,32 @@ const Message: FC<MessageProps> = ({
           </Paper>
         </Popover>
 
+        {/* Delete options menu */}
+        <Menu
+          anchorEl={deleteAnchorEl}
+          open={Boolean(deleteAnchorEl)}
+          onClose={() => setDeleteAnchorEl(null)}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "center",
+          }}
+          transformOrigin={{
+            vertical: "bottom",
+            horizontal: "center",
+          }}
+        >
+          <MenuItem onClick={handleDeleteForMe} sx={{ minWidth: 150 }}>
+            <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+            Delete for me
+          </MenuItem>
+          {isCurrentUser && (
+            <MenuItem onClick={handleDeleteForEveryone} sx={{ minWidth: 150 }}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Delete for everyone
+            </MenuItem>
+          )}
+        </Menu>
+
         {/* Mobile Action Bottom Sheet */}
         {isMobile && (
           <SwipeableDrawer
@@ -907,7 +1197,45 @@ const Message: FC<MessageProps> = ({
                     primary={isPinned ? "Unpin Message" : "Pin Message"}
                   />
                 </ListItem>
+                {message.text.length > 100 && (
+                  <ListItem
+                    button
+                    onClick={handleMobileSummarize}
+                    sx={{ py: 2 }}
+                  >
+                    <ListItemIcon>
+                      <DescriptionIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Summarize" />
+                  </ListItem>
+                )}
               </List>
+
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Delete options
+                </Typography>
+                <List disablePadding>
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={handleDeleteForMe}>
+                      <ListItemIcon>
+                        <DeleteOutlineIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Delete for me" />
+                    </ListItemButton>
+                  </ListItem>
+                  {isCurrentUser && (
+                    <ListItem disablePadding>
+                      <ListItemButton onClick={handleDeleteForEveryone}>
+                        <ListItemIcon>
+                          <DeleteIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Delete for everyone" />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
+                </List>
+              </Box>
             </Box>
           </SwipeableDrawer>
         )}
@@ -939,6 +1267,51 @@ const Message: FC<MessageProps> = ({
           clearAvatarTimeout={clearAvatarTimeout}
         />
       )}
+
+      {/* Summary Dialog for longer summaries */}
+      <Dialog
+        open={summaryDialogOpen}
+        onClose={handleCloseSummaryDialog}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", md: "600px" },
+            borderRadius: 2,
+            p: 1,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            bgcolor: "#FF6F61",
+            color: "white",
+            borderRadius: "8px 8px 0 0",
+            py: 1.5,
+          }}
+        >
+          Message Summary
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2, mb: 1 }}>
+          {isSummarizing ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+              <Typography>Generating summary...</Typography>
+            </Box>
+          ) : (
+            <Typography variant="body1">{messageSummary}</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseSummaryDialog}
+            sx={{
+              color: "#FF6F61",
+              "&:hover": { bgcolor: "rgba(255, 111, 97, 0.08)" },
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
