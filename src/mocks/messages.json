@@ -3,7 +3,7 @@
     "id": "msg1",
     "chatId": "chat1",
     "senderId": "user2",
-    "senderName": "Alex Chen",
+    "senderName": "Alex Johnson",
     "text": "Hey team, I've just pushed the latest updates to the design system",
     "timestamp": 1718035100000,
     "isRead": false
@@ -12,7 +12,7 @@
     "id": "msg2",
     "chatId": "chat1",
     "senderId": "user3",
-    "senderName": "Taylor Kim",
+    "senderName": "Taylor Swift",
     "text": "Looks great! I especially like the new button styles",
     "timestamp": 1718035150000,
     "isRead": false
@@ -21,7 +21,7 @@
     "id": "msg3",
     "chatId": "chat1",
     "senderId": "user4",
-    "senderName": "Jordan Smith",
+    "senderName": "John Smith",
     "text": "Let's review the new design system together this afternoon",
     "timestamp": 1718035200000,
     "isRead": false
@@ -30,13 +30,13 @@
     "id": "msg4",
     "chatId": "chat1",
     "senderId": "user2",
-    "senderName": "Alex Chen",
+    "senderName": "Alex Johnson",
     "text": "I've also added a prototype for mobile views",
     "timestamp": 1718035250000,
     "isRead": false,
     "media": {
       "type": "image",
-      "url": "https://via.placeholder.com/400x300",
+      "url": "https://picsum.photos/200",
       "name": "mobile-prototype.png",
       "size": 1240000
     }
@@ -45,52 +45,64 @@
     "id": "msg5",
     "chatId": "chat1",
     "senderId": "user3",
-    "senderName": "Taylor Kim",
+    "senderName": "Taylor Swift",
     "text": "Nice work! The responsive behavior looks smooth",
     "timestamp": 1718035300000,
     "isRead": false
   },
   {
     "id": "msg6",
+    "chatId": "chat1",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "I've fixed that accessibility issue on the dropdown component",
+    "timestamp": 1718035400000,
+    "isRead": false,
+    "status": "sent"
+  },
+  {
+    "id": "msg7",
     "chatId": "chat2",
     "senderId": "user5",
-    "senderName": "Riley Johnson",
+    "senderName": "Emma Parker",
     "text": "What frameworks are we considering for the new project?",
     "timestamp": 1718027800000,
     "isRead": true
   },
   {
-    "id": "msg7",
+    "id": "msg8",
     "chatId": "chat2",
     "senderId": "user1",
     "senderName": "Jamie Doe",
     "text": "I was thinking about Vue or React",
     "timestamp": 1718027900000,
-    "isRead": true
+    "isRead": true,
+    "status": "read"
   },
   {
-    "id": "msg8",
+    "id": "msg9",
     "chatId": "chat2",
     "senderId": "user2",
-    "senderName": "Alex Chen",
+    "senderName": "Alex Johnson",
     "text": "I think we should use React for this. It would integrate better with our existing tools",
     "timestamp": 1718028000000,
     "isRead": true
   },
   {
-    "id": "msg9",
+    "id": "msg10",
     "chatId": "chat2",
     "senderId": "user1",
     "senderName": "Jamie Doe",
     "text": "Good point. React it is then!",
     "timestamp": 1718028100000,
-    "isRead": true
+    "isRead": true,
+    "status": "read"
   },
   {
-    "id": "msg10",
+    "id": "msg11",
     "chatId": "chat2",
     "senderId": "user5",
-    "senderName": "Riley Johnson",
+    "senderName": "Emma Parker",
     "text": "Agreed. Let me share some starter templates I've used before",
     "timestamp": 1718028200000,
     "isRead": true,
@@ -102,7 +114,22 @@
     }
   },
   {
-    "id": "msg11",
+    "id": "msg12",
+    "chatId": "chat2",
+    "senderId": "user2",
+    "senderName": "Alex Johnson",
+    "text": "I've attached a few examples of animation libraries we could use",
+    "timestamp": 1718028300000,
+    "isRead": true,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "animation-libraries.pdf",
+      "size": 4750000
+    }
+  },
+  {
+    "id": "msg13",
     "chatId": "chat3",
     "senderId": "user6",
     "senderName": "Sarah Johnson",
@@ -111,16 +138,17 @@
     "isRead": true
   },
   {
-    "id": "msg12",
+    "id": "msg14",
     "chatId": "chat3",
     "senderId": "user1",
     "senderName": "Jamie Doe",
     "text": "Great! Can you share it with me?",
     "timestamp": 1717948600000,
-    "isRead": true
+    "isRead": true,
+    "status": "read"
   },
   {
-    "id": "msg13",
+    "id": "msg15",
     "chatId": "chat3",
     "senderId": "user6",
     "senderName": "Sarah Johnson",
@@ -135,16 +163,17 @@
     }
   },
   {
-    "id": "msg14",
+    "id": "msg16",
     "chatId": "chat3",
     "senderId": "user1",
     "senderName": "Jamie Doe",
     "text": "Thanks! I'll review it this afternoon",
     "timestamp": 1717948750000,
-    "isRead": true
+    "isRead": true,
+    "status": "read"
   },
   {
-    "id": "msg15",
+    "id": "msg17",
     "chatId": "chat3",
     "senderId": "user6",
     "senderName": "Sarah Johnson",
@@ -156,6 +185,485 @@
       "url": "#",
       "name": "Q2-Presentation.pptx",
       "size": 5670000
+    }
+  },
+  {
+    "id": "msg18",
+    "chatId": "chat3",
+    "senderId": "user6",
+    "senderName": "Sarah Johnson",
+    "text": "Let me know when we can discuss the feedback from the client",
+    "timestamp": 1717948900000,
+    "isRead": false
+  },
+  {
+    "id": "msg19",
+    "chatId": "chat4",
+    "senderId": "user7",
+    "senderName": "Maya Rodriguez",
+    "text": "Team, we've completed the first round of user testing for the new checkout flow",
+    "timestamp": 1718033700000,
+    "isRead": false,
+    "pinned": true
+  },
+  {
+    "id": "msg20",
+    "chatId": "chat4",
+    "senderId": "user8",
+    "senderName": "David Kim",
+    "text": "How many participants did we have?",
+    "timestamp": 1718033800000,
+    "isRead": false
+  },
+  {
+    "id": "msg21",
+    "chatId": "chat4",
+    "senderId": "user7",
+    "senderName": "Maya Rodriguez",
+    "text": "We had 12 participants across different demographics",
+    "timestamp": 1718033850000,
+    "isRead": false
+  },
+  {
+    "id": "msg22",
+    "chatId": "chat4",
+    "senderId": "user9",
+    "senderName": "Priya Patel",
+    "text": "Here's a recording of one of the test sessions",
+    "timestamp": 1718033900000,
+    "isRead": false,
+    "media": {
+      "type": "video",
+      "url": "#",
+      "name": "user-test-session3.mp4",
+      "size": 102400000
+    }
+  },
+  {
+    "id": "msg23",
+    "chatId": "chat4",
+    "senderId": "user7",
+    "senderName": "Maya Rodriguez",
+    "text": "The user testing results have been analyzed - check out the insights!",
+    "timestamp": 1718034000000,
+    "isRead": false,
+    "summary": "Summary of user testing findings for the checkout flow redesign, highlighting pain points and areas for improvement",
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "ux-research-findings.pdf",
+      "size": 8750000
+    }
+  },
+  {
+    "id": "msg24",
+    "chatId": "chat5",
+    "senderId": "user10",
+    "senderName": "Michael Chen",
+    "text": "Jamie, could you review my PR for the authentication service?",
+    "timestamp": 1718029700000,
+    "isRead": true
+  },
+  {
+    "id": "msg25",
+    "chatId": "chat5",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Sure, I'll take a look. Is there anything specific you want me to focus on?",
+    "timestamp": 1718029800000,
+    "isRead": true,
+    "status": "read"
+  },
+  {
+    "id": "msg26",
+    "chatId": "chat5",
+    "senderId": "user10",
+    "senderName": "Michael Chen",
+    "text": "Mainly the error handling and the token refresh logic. I'm not sure if I'm handling all edge cases",
+    "timestamp": 1718029900000,
+    "isRead": true
+  },
+  {
+    "id": "msg27",
+    "chatId": "chat5",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Just finished the review. Here are my comments",
+    "timestamp": 1718030000000,
+    "isRead": true,
+    "status": "read",
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "code-review-comments.md",
+      "size": 1280000
+    }
+  },
+  {
+    "id": "msg28",
+    "chatId": "chat5",
+    "senderId": "user10",
+    "senderName": "Michael Chen",
+    "text": "Thanks for the code review! I've addressed all your comments",
+    "timestamp": 1718030100000,
+    "isRead": true
+  },
+  {
+    "id": "msg29",
+    "chatId": "chat6",
+    "senderId": "user11",
+    "senderName": "Olivia Wilson",
+    "text": "Team, we need to submit our hackathon project by tomorrow at 5 PM",
+    "timestamp": 1718019700000,
+    "isRead": true,
+    "isSaved": true,
+    "savedAt": 1718019800000
+  },
+  {
+    "id": "msg30",
+    "chatId": "chat6",
+    "senderId": "user12",
+    "senderName": "Ethan Brown",
+    "text": "I'm just finishing up the frontend. Does anyone still need help with their part?",
+    "timestamp": 1718019800000,
+    "isRead": true
+  },
+  {
+    "id": "msg31",
+    "chatId": "chat6",
+    "senderId": "user13",
+    "senderName": "Sophie Lee",
+    "text": "I could use some help with the AI integration",
+    "timestamp": 1718019850000,
+    "isRead": true
+  },
+  {
+    "id": "msg32",
+    "chatId": "chat6",
+    "senderId": "user14",
+    "senderName": "Noah Garcia",
+    "text": "I can help with that, Sophie. I'll DM you",
+    "timestamp": 1718019900000,
+    "isRead": true
+  },
+  {
+    "id": "msg33",
+    "chatId": "chat6",
+    "senderId": "user11",
+    "senderName": "Olivia Wilson",
+    "text": "We've been announced as finalists! Presentation is in 30 minutes",
+    "timestamp": 1718019950000,
+    "isRead": false,
+    "reactions": [
+      {
+        "emoji": "👍",
+        "userId": "user12",
+        "timestamp": 1718019960000
+      },
+      {
+        "emoji": "❤️",
+        "userId": "user13",
+        "timestamp": 1718019970000
+      },
+      {
+        "emoji": "🎉",
+        "userId": "user14",
+        "timestamp": 1718019980000
+      }
+    ]
+  },
+  {
+    "id": "msg34",
+    "chatId": "chat6",
+    "senderId": "user11",
+    "senderName": "Olivia Wilson",
+    "text": "We won first place! 🏆 Celebratory lunch tomorrow?",
+    "timestamp": 1718020000000,
+    "isRead": false,
+    "reactions": [
+      {
+        "emoji": "🎉",
+        "userId": "user12",
+        "timestamp": 1718020010000
+      },
+      {
+        "emoji": "🎉",
+        "userId": "user13",
+        "timestamp": 1718020020000
+      },
+      {
+        "emoji": "🎉",
+        "userId": "user14",
+        "timestamp": 1718020030000
+      },
+      {
+        "emoji": "❤️",
+        "userId": "user1",
+        "timestamp": 1718020040000
+      }
+    ]
+  },
+  {
+    "id": "msg35",
+    "chatId": "chat7",
+    "senderId": "user15",
+    "senderName": "Liam Scott",
+    "text": "I'm having trouble with the auth middleware - getting 401 errors",
+    "timestamp": 1718014700000,
+    "isRead": true
+  },
+  {
+    "id": "msg36",
+    "chatId": "chat7",
+    "senderId": "user16",
+    "senderName": "Emma Davis",
+    "text": "Are you passing the token in the Authorization header?",
+    "timestamp": 1718014750000,
+    "isRead": true
+  },
+  {
+    "id": "msg37",
+    "chatId": "chat7",
+    "senderId": "user15",
+    "senderName": "Liam Scott",
+    "text": "Yes, but I might be formatting it wrong",
+    "timestamp": 1718014800000,
+    "isRead": true
+  },
+  {
+    "id": "msg38",
+    "chatId": "chat7",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Make sure you're using 'Bearer ' prefix before the token",
+    "timestamp": 1718014850000,
+    "isRead": true,
+    "status": "read",
+    "replyToId": "msg35"
+  },
+  {
+    "id": "msg39",
+    "chatId": "chat7",
+    "senderId": "user15",
+    "senderName": "Liam Scott",
+    "text": "That was it! I forgot the Bearer prefix. Thanks Jamie!",
+    "timestamp": 1718014900000,
+    "isRead": true
+  },
+  {
+    "id": "msg40",
+    "chatId": "chat7",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "No problem! Let me know if you run into any other issues",
+    "timestamp": 1718014950000,
+    "isRead": true,
+    "status": "read"
+  },
+  {
+    "id": "msg41",
+    "chatId": "chat7",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "The authentication middleware is now working correctly",
+    "timestamp": 1718015000000,
+    "isRead": true,
+    "status": "read"
+  },
+  {
+    "id": "msg42",
+    "chatId": "chat8",
+    "senderId": "user17",
+    "senderName": "Isabella Martinez",
+    "text": "Everyone, we need to standardize our design system. Too many inconsistent components in the app",
+    "timestamp": 1717999700000,
+    "isRead": false,
+    "pinned": true
+  },
+  {
+    "id": "msg43",
+    "chatId": "chat8",
+    "senderId": "user2",
+    "senderName": "Alex Johnson",
+    "text": "I agree. I've noticed at least three different button styles",
+    "timestamp": 1717999750000,
+    "isRead": false
+  },
+  {
+    "id": "msg44",
+    "chatId": "chat8",
+    "senderId": "user3",
+    "senderName": "Taylor Swift",
+    "text": "And our color palette isn't being applied consistently",
+    "timestamp": 1717999800000,
+    "isRead": false
+  },
+  {
+    "id": "msg45",
+    "chatId": "chat8",
+    "senderId": "user18",
+    "senderName": "James Wilson",
+    "text": "I've started documenting the current state - here's what I found",
+    "timestamp": 1717999850000,
+    "isRead": false,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "design-audit.pdf",
+      "size": 7850000
+    }
+  },
+  {
+    "id": "msg46",
+    "chatId": "chat8",
+    "senderId": "user17",
+    "senderName": "Isabella Martinez",
+    "text": "This is great work, James. Let's use this as our starting point",
+    "timestamp": 1717999900000,
+    "isRead": false,
+    "replyToId": "msg45"
+  },
+  {
+    "id": "msg47",
+    "chatId": "chat8",
+    "senderId": "user17",
+    "senderName": "Isabella Martinez",
+    "text": "I created a Figma library with all our components",
+    "timestamp": 1718000000000,
+    "isRead": false,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "design-system-v1.fig",
+      "size": 12500000
+    }
+  },
+  {
+    "id": "msg48",
+    "chatId": "chat9",
+    "senderId": "user19",
+    "senderName": "Jessica Parker",
+    "text": "Hey Jamie, how's the new project going?",
+    "timestamp": 1717989700000,
+    "isRead": true
+  },
+  {
+    "id": "msg49",
+    "chatId": "chat9",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "It's going well! Just busy with the new design system implementation",
+    "timestamp": 1717989800000,
+    "isRead": true,
+    "status": "read"
+  },
+  {
+    "id": "msg50",
+    "chatId": "chat9",
+    "senderId": "user19",
+    "senderName": "Jessica Parker",
+    "text": "I'd love to catch up and hear more about it. Coffee sometime?",
+    "timestamp": 1717989900000,
+    "isRead": true
+  },
+  {
+    "id": "msg51",
+    "chatId": "chat9",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Definitely! How about tomorrow morning?",
+    "timestamp": 1717990000000,
+    "isRead": false,
+    "status": "delivered"
+  },
+  {
+    "id": "msg52",
+    "chatId": "chat9",
+    "senderId": "user19",
+    "senderName": "Jessica Parker",
+    "text": "Are we still meeting for coffee tomorrow at 10?",
+    "timestamp": 1717990100000,
+    "isRead": false
+  },
+  {
+    "id": "msg53",
+    "chatId": "chat10",
+    "senderId": "user20",
+    "senderName": "Daniel Thomas",
+    "text": "The tech conference planning is in full swing. We need to finalize speakers by Friday",
+    "timestamp": 1717979700000,
+    "isRead": false,
+    "pinned": true
+  },
+  {
+    "id": "msg54",
+    "chatId": "chat10",
+    "senderId": "user21",
+    "senderName": "Ava Robinson",
+    "text": "I've contacted all the potential speakers - here's their availability",
+    "timestamp": 1717979750000,
+    "isRead": false,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "speaker-availability.xlsx",
+      "size": 2340000
+    },
+    "isSaved": true,
+    "savedAt": 1717979760000
+  },
+  {
+    "id": "msg55",
+    "chatId": "chat10",
+    "senderId": "user22",
+    "senderName": "William Clark",
+    "text": "Do we have a backup for the keynote in case Sarah can't make it?",
+    "timestamp": 1717979800000,
+    "isRead": false
+  },
+  {
+    "id": "msg56",
+    "chatId": "chat10",
+    "senderId": "user21",
+    "senderName": "Ava Robinson",
+    "text": "Yes, Michael from Google said he could step in if needed",
+    "timestamp": 1717979850000,
+    "isRead": false,
+    "replyToId": "msg55"
+  },
+  {
+    "id": "msg57",
+    "chatId": "chat10",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "How many tracks are we planning for this year?",
+    "timestamp": 1717979900000,
+    "isRead": false,
+    "status": "sent"
+  },
+  {
+    "id": "msg58",
+    "chatId": "chat10",
+    "senderId": "user20",
+    "senderName": "Daniel Thomas",
+    "text": "We're looking at 4 tracks: Frontend, Backend, DevOps, and AI/ML",
+    "timestamp": 1717979950000,
+    "isRead": false,
+    "replyToId": "msg57"
+  },
+  {
+    "id": "msg59",
+    "chatId": "chat10",
+    "senderId": "user23",
+    "senderName": "Grace Hall",
+    "text": "The speaker list has been finalized - check the spreadsheet",
+    "timestamp": 1717980000000,
+    "isRead": false,
+    "forwardedFrom": {
+      "chatId": "chat-organizers",
+      "chatName": "Conference Organizers",
+      "messageId": "original-schedule-msg",
+      "senderName": "Conference Committee"
     }
   }
 ]
