@@ -26,10 +26,6 @@ A modern, responsive chat application built with React, TypeScript, and Material
 - **Frontend Framework**: React 19
 - **Language**: TypeScript
 - **UI Library**: Material UI v5
-- **State Management**: React Hooks
-- **Animation**: Framer Motion
-- **Date/Time Handling**: date-fns
-- **AI Features**: Hugging Face Transformers
 - **Build Tool**: Vite
 - **Styling**: Emotion (CSS-in-JS)
 - **Linting**: ESLint
@@ -235,8 +231,6 @@ While the application appears to have AI capabilities, these are actually implem
 - **Mocked Smart Replies**: Predefined reply suggestions that appear contextual but are not actually AI-generated
 - **Simulated Message Summarization**: Predetermined summaries for demonstration purposes
 - **Fake Sentiment Analysis**: Hardcoded sentiment detection for demo purposes
-
-The app includes references to Hugging Face's transformers in the dependencies for future implementation, but currently does not use any actual AI or machine learning models.
 
 ## 💻 Implementation Details
 
