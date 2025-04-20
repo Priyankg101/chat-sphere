@@ -290,6 +290,17 @@ function App() {
           : chat
       )
     );
+
+    // Switch to the target chat after forwarding
+    if (targetChat) {
+      handleSelectChat(targetChat);
+      // Highlight the forwarded message
+      setHighlightedMessageId(forwardedMessage.id);
+      // Clear the highlight after a short delay
+      setTimeout(() => {
+        setHighlightedMessageId(undefined);
+      }, 3000);
+    }
   };
 
   const handleSaveMessage = (messageId: string, isSaved: boolean) => {
