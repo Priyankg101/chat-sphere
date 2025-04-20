@@ -36,6 +36,11 @@ export interface IReaction {
 }
 
 /**
+ * Message delivery status
+ */
+export type MessageStatus = "sent" | "delivered" | "read";
+
+/**
  * Interface representing a message
  */
 export interface IMessage {
@@ -60,9 +65,32 @@ export interface IMessage {
   /** Whether the message has been read */
   isRead?: boolean;
 
+  /** Delivery status of the message */
+  status?: MessageStatus;
+
+  /** Whether the message is pinned */
+  pinned?: boolean;
+
   /** Optional media attachment */
   media?: IMediaAttachment;
 
   /** Array of reactions to this message */
   reactions?: IReaction[];
+
+  /** Optional ID of the message being replied to */
+  replyToId?: string;
+
+  /** Whether this message has been saved/bookmarked */
+  isSaved?: boolean;
+
+  /** When message was saved (timestamp) */
+  savedAt?: number;
+
+  /** Optional forwarded info */
+  forwardedFrom?: {
+    chatId: string;
+    chatName: string;
+    messageId: string;
+    senderName: string;
+  };
 }

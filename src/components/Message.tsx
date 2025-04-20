@@ -11,28 +11,36 @@ import {
   Chip,
   Fade,
   useMediaQuery,
-  Theme,
   SwipeableDrawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   Popover,
+  useTheme,
 } from "@mui/material";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
 import ReplyIcon from "@mui/icons-material/Reply";
 import ForwardIcon from "@mui/icons-material/Forward";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
-import { IMessage, IReaction } from "../types/message";
+import DoneIcon from "@mui/icons-material/Done";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import { IMessage, IReaction, MessageStatus } from "../types/message";
 import MediaPreview from "./MediaPreview";
+import ReplyMessageContent from "./ReplyMessageContent";
+import ForwardedMessageInfo from "./ForwardedMessageInfo";
 
 interface MessageProps {
   message: IMessage;
   isCurrentUser?: boolean;
+  isPinned?: boolean;
   onReply?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
   onSave?: (messageId: string) => void;
+  onPinMessage?: (messageId: string, isPinned: boolean) => void;
+  isHighlighted?: boolean;
+  replyToMessage?: IMessage | null;
 }
 
 // Define available emoji reactions
@@ -56,45 +64,116 @@ const USERS = {
 const Message: FC<MessageProps> = ({
   message,
   isCurrentUser = false,
+  isPinned = false,
   onReply = () => {},
   onForward = () => {},
   onSave = () => {},
+  onPinMessage = () => {},
+  isHighlighted = false,
+  replyToMessage = null,
 }) => {
-  // State for reaction picker popper
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [reactions, setReactions] = useState<IReaction[]>(
-    message.reactions?.length
-      ? message.reactions
-      : [
-          // Add default reaction for testing
-          {
-            emoji: "❤️",
-            userId: "user2",
-            timestamp: Date.now() - 60000,
-          },
-          {
-            emoji: "👍",
-            userId: "user3",
-            timestamp: Date.now() - 120000,
-          },
-        ]
-  );
+  // Use refs for various DOM elements
+  const messageRef = useRef<HTMLDivElement>(null);
+  // const textfieldRef = useRef<HTMLDivElement>(null);
+
+  // Hooks for different features
+  const [messageStatus, setMessageStatus] = useState<MessageStatus>("sent");
   const [showActions, setShowActions] = useState(false);
-  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
-    null
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  // const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+  const [reactions, setReactions] = useState<IReaction[]>(
+    message.reactions || []
   );
+
+  // Mobile-specific state
+  // const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchTimer, setTouchTimer] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+
+  // Visual effect states
+  const [isBlinking, setIsBlinking] = useState(isHighlighted);
+  const [blinkCount, setBlinkCount] = useState(0);
+
+  // Get browser window width
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // State for reaction picker popper
   const [reactionDetailsAnchor, setReactionDetailsAnchor] =
     useState<null | HTMLElement>(null);
   const [currentReactionDetails, setCurrentReactionDetails] = useState<{
     emoji: string;
     users: string[];
   }>({ emoji: "", users: [] });
-  const reactionButtonRef = useRef<HTMLButtonElement>(null);
-  const messageRef = useRef<HTMLDivElement>(null);
-  const isMobile = useMediaQuery((theme: Theme) =>
-    theme.breakpoints.down("sm")
-  );
+
+  // const reactionButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Check if reaction details popover should be open
+  const reactionDetailsOpen = Boolean(reactionDetailsAnchor);
+  // Check if reaction picker should be open
+  const open = Boolean(anchorEl);
+
+  // Mock status changes for current user's messages
+  useEffect(() => {
+    if (!isCurrentUser) return;
+
+    // Initialize with the message's status or default to "sent"
+    const initialStatus = message.status || "sent";
+    setMessageStatus(initialStatus);
+
+    // If status is already at final state, no need to proceed
+    if (initialStatus === "read") return;
+
+    // Simulate "delivered" status after 1.5 seconds if not already delivered
+    if (initialStatus === "sent") {
+      const deliveredTimer = setTimeout(() => {
+        setMessageStatus("delivered");
+        // Save to localStorage to persist the state
+        saveMessageStatus("delivered");
+      }, 1500);
+
+      return () => clearTimeout(deliveredTimer);
+    }
+
+    // Simulate "read" status after 3 seconds if already delivered
+    if (initialStatus === "delivered") {
+      const readTimer = setTimeout(() => {
+        setMessageStatus("read");
+        // Save to localStorage to persist the state
+        saveMessageStatus("read");
+      }, 3000);
+
+      return () => clearTimeout(readTimer);
+    }
+  }, [isCurrentUser, message.id, message.status]);
+
+  // Save message status to localStorage
+  const saveMessageStatus = (status: MessageStatus) => {
+    try {
+      const key = `message_status_${message.id}`;
+      localStorage.setItem(key, status);
+    } catch (error) {
+      console.error("Error saving message status:", error);
+    }
+  };
+
+  // Load message status from localStorage on component mount
+  useEffect(() => {
+    if (!isCurrentUser) return;
+
+    try {
+      const key = `message_status_${message.id}`;
+      const savedStatus = localStorage.getItem(key) as MessageStatus | null;
+
+      if (savedStatus && ["sent", "delivered", "read"].includes(savedStatus)) {
+        setMessageStatus(savedStatus);
+      }
+    } catch (error) {
+      console.error("Error loading message status:", error);
+    }
+  }, [message.id, isCurrentUser]);
 
   // Load reactions from localStorage on component mount
   useEffect(() => {
@@ -114,27 +193,49 @@ const Message: FC<MessageProps> = ({
     localStorage.setItem(`reactions_${message.id}`, JSON.stringify(reactions));
   }, [reactions, message.id]);
 
+  // Handle blinking effect when a message is highlighted from search results
+  useEffect(() => {
+    if (isHighlighted) {
+      // Scroll the message into view
+      messageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      // Start blinking effect
+      setBlinkCount(4); // 2 complete blink cycles
+      setIsBlinking(true);
+
+      // Set up timer to stop blinking after all cycles complete
+      const timer = setTimeout(() => {
+        setIsBlinking(false);
+      }, 1200); // 4 * 300ms = 1200ms total for all blinks
+
+      return () => clearTimeout(timer);
+    }
+  }, [isHighlighted]);
+
   // Handle mobile touch interactions
   const handleTouchStart = () => {
     if (isMobile) {
       const timer = setTimeout(() => {
         setMobileActionsOpen(true);
       }, 500); // 500ms long press
-      setLongPressTimer(timer);
+      setTouchTimer(timer);
     }
   };
 
   const handleTouchEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+    if (touchTimer) {
+      clearTimeout(touchTimer);
+      setTouchTimer(null);
     }
   };
 
   const handleTouchMove = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+    if (touchTimer) {
+      clearTimeout(touchTimer);
+      setTouchTimer(null);
     }
   };
 
@@ -205,19 +306,7 @@ const Message: FC<MessageProps> = ({
     setReactionDetailsAnchor(null);
   };
 
-  // Group reactions by emoji for display
-  const groupedReactions = reactions.reduce<Record<string, number>>(
-    (acc, reaction) => {
-      acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
-      return acc;
-    },
-    {}
-  );
-
-  const open = Boolean(anchorEl);
-  const reactionDetailsOpen = Boolean(reactionDetailsAnchor);
-
-  // Mobile action handlers with drawer closure
+  // Mobile action handlers
   const handleMobileReply = () => {
     onReply(message.id);
     setMobileActionsOpen(false);
@@ -233,6 +322,56 @@ const Message: FC<MessageProps> = ({
     setMobileActionsOpen(false);
   };
 
+  const handleMobilePin = () => {
+    handlePinMessage();
+    setMobileActionsOpen(false);
+  };
+
+  // Handle pin message action
+  const handlePinMessage = () => {
+    // Toggle pinned status using the prop value from parent
+    onPinMessage(message.id, !isPinned);
+  };
+
+  // Get the appropriate status icon based on message status
+  const getStatusIcon = () => {
+    // Always show status icon for current user's messages
+    // Previously had: if (!isCurrentUser) return null;
+
+    // Use white color for better visibility on teal background
+    const iconColor = isCurrentUser ? "white" : "#26A69A";
+    const iconSize = isMobile ? "small" : "small";
+
+    switch (messageStatus) {
+      case "delivered":
+        return (
+          <DoneAllIcon
+            fontSize={iconSize}
+            sx={{ color: iconColor, opacity: 0.8 }}
+          />
+        );
+      case "read":
+        return <DoneAllIcon fontSize={iconSize} sx={{ color: iconColor }} />;
+      case "sent":
+      default:
+        return (
+          <DoneIcon
+            fontSize={iconSize}
+            sx={{ color: iconColor, opacity: 0.8 }}
+          />
+        );
+    }
+  };
+
+  // Group reactions by emoji for display
+  const groupedReactions = reactions.reduce<Record<string, number>>(
+    (acc, reaction) => {
+      acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+      return acc;
+    },
+    {}
+  );
+
   return (
     <Box
       sx={{
@@ -242,8 +381,25 @@ const Message: FC<MessageProps> = ({
         alignSelf: isCurrentUser ? "flex-end" : "flex-start",
         maxWidth: { xs: "85%", sm: "70%" },
         mb: 1,
+        position: "relative",
       }}
     >
+      {isPinned && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: -8,
+            right: isCurrentUser ? -8 : "auto",
+            left: isCurrentUser ? "auto" : -8,
+            transform: "rotate(45deg)",
+            color: "#26A69A",
+            zIndex: 2,
+          }}
+        >
+          <PushPinIcon fontSize="small" />
+        </Box>
+      )}
+
       {!isCurrentUser && (
         <Avatar
           sx={{
@@ -287,12 +443,56 @@ const Message: FC<MessageProps> = ({
           sx={{
             p: 1.5,
             borderRadius: 2,
-            bgcolor: isCurrentUser ? "primary.light" : "background.default",
-            color: isCurrentUser ? "primary.contrastText" : "text.primary",
+            bgcolor: isBlinking
+              ? blinkCount % 2 === 0
+                ? "#FF6F61"
+                : "background.paper"
+              : isCurrentUser
+              ? "#26A69A"
+              : "background.paper",
+            color: isBlinking
+              ? blinkCount % 2 === 0
+                ? "white"
+                : "text.primary"
+              : isCurrentUser
+              ? "white"
+              : "text.primary",
             maxWidth: "100%",
             position: "relative",
+            transition:
+              "background-color 300ms ease, color 300ms ease, transform 200ms ease-out",
+            ...(isPinned && {
+              border: "1px solid #26A69A",
+            }),
+            ...(message.isSaved && {
+              borderRight: "3px solid #FFC107",
+            }),
+            boxShadow: isCurrentUser
+              ? "0 1px 2px rgba(38, 166, 154, 0.3)"
+              : "0 1px 2px rgba(0, 0, 0, 0.1)",
+            "&:hover": {
+              boxShadow: isCurrentUser
+                ? "0 3px 6px rgba(38, 166, 154, 0.4)"
+                : "0 3px 6px rgba(0, 0, 0, 0.15)",
+            },
           }}
         >
+          {/* Forwarded message info */}
+          {message.forwardedFrom && (
+            <ForwardedMessageInfo
+              chatName={message.forwardedFrom.chatName}
+              senderName={message.forwardedFrom.senderName}
+            />
+          )}
+
+          {/* Reply to message content */}
+          {message.replyToId && replyToMessage && (
+            <ReplyMessageContent
+              replyMessage={replyToMessage}
+              isCurrentUserMessage={isCurrentUser}
+            />
+          )}
+
           {message.media && (
             <Box sx={{ mb: 1 }}>
               <MediaPreview media={message.media} />
@@ -378,28 +578,43 @@ const Message: FC<MessageProps> = ({
                     sx={{
                       p: 0.5,
                       fontSize: "0.75rem",
-                      color: "text.secondary",
+                      color: message.isSaved ? "#FFC107" : "text.secondary",
                       "&:hover": { bgcolor: "secondary.light" },
                     }}
                   >
                     <BookmarkIcon fontSize="small" />
                   </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={handlePinMessage}
+                    sx={{
+                      p: 0.5,
+                      fontSize: "0.75rem",
+                      color: isPinned ? "#26A69A" : "text.secondary",
+                      "&:hover": { bgcolor: "secondary.light" },
+                    }}
+                  >
+                    <PushPinIcon fontSize="small" />
+                  </IconButton>
                 </Box>
               </Fade>
             )}
-            <Typography
-              variant="caption"
-              sx={{
-                textAlign: "right",
-                fontSize: { xs: "0.65rem", sm: "0.7rem" },
-                opacity: 0.8,
-              }}
-            >
-              {new Date(message.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {isCurrentUser && getStatusIcon()}
+              <Typography
+                variant="caption"
+                sx={{
+                  textAlign: "right",
+                  fontSize: { xs: "0.65rem", sm: "0.7rem" },
+                  opacity: 0.8,
+                }}
+              >
+                {new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Typography>
+            </Box>
           </Box>
         </Paper>
 
@@ -450,7 +665,11 @@ const Message: FC<MessageProps> = ({
                 onTouchStart={(e) =>
                   isMobile &&
                   handleShowReactionDetails(
-                    e as React.MouseEvent<HTMLElement>,
+                    {
+                      currentTarget: e.currentTarget,
+                      clientX: e.touches[0].clientX,
+                      clientY: e.touches[0].clientY,
+                    } as unknown as React.MouseEvent<HTMLElement>,
                     emoji
                   )
                 }
@@ -593,6 +812,16 @@ const Message: FC<MessageProps> = ({
                     <BookmarkIcon />
                   </ListItemIcon>
                   <ListItemText primary="Save" />
+                </ListItem>
+                <ListItem button onClick={handleMobilePin} sx={{ py: 2 }}>
+                  <ListItemIcon>
+                    <PushPinIcon
+                      sx={{ color: isPinned ? "#26A69A" : "inherit" }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={isPinned ? "Unpin Message" : "Pin Message"}
+                  />
                 </ListItem>
               </List>
             </Box>

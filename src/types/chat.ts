@@ -13,6 +13,17 @@ export interface IChatMember {
 }
 
 /**
+ * Interface for last message in a chat
+ */
+export interface ILastMessage {
+  /** Text content of the last message */
+  text: string;
+
+  /** Timestamp of when the message was sent */
+  timestamp: number;
+}
+
+/**
  * Interface representing a chat or conversation
  */
 export interface IChat {
@@ -22,8 +33,14 @@ export interface IChat {
   /** Name of the group or conversation */
   groupName: string;
 
-  /** Text of the most recent message */
-  lastMessage: string;
+  /** Array of participant IDs */
+  participants: string[];
+
+  /** Information about the most recent message */
+  lastMessage: {
+    text: string;
+    timestamp: number;
+  };
 
   /** Timestamp of the most recent message */
   timestamp: number;
@@ -31,11 +48,11 @@ export interface IChat {
   /** Number of unread messages */
   unreadCount: number;
 
-  /** Optional avatar URL */
-  avatarUrl?: string;
+  /** Type of the chat */
+  type: "individual" | "group";
 
-  /** Array of participant IDs */
-  participants?: string[];
+  /** Optional avatar URL */
+  avatar?: string;
 
   /** Array of member details */
   members?: IChatMember[];
