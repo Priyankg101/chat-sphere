@@ -1,0 +1,101 @@
+/* Reset styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Set base font */
+html {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px; /* Default for mobile */
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive typography */
+@media (min-width: 768px) {
+  html {
+    font-size: 16px; /* Larger font size for desktop */
+  }
+}
+
+/* Form elements consistent styling */
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
+/* Make images responsive */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Remove list styles */
+ul,
+ol {
+  list-style: none;
+}
+
+/* Basic link styling */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Improve touch targets for mobile */
+button,
+[role="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  min-height: 44px; /* Recommended touch target size */
+  min-width: 44px;
+}
+
+/* Prevent long words from breaking layout */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Responsive containers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 24px;
+  }
+}
+
+/* Utility classes */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,161 @@
+[
+  {
+    "id": "msg1",
+    "chatId": "chat1",
+    "senderId": "user2",
+    "senderName": "Alex Chen",
+    "text": "Hey team, I've just pushed the latest updates to the design system",
+    "timestamp": 1718035100000,
+    "isRead": false
+  },
+  {
+    "id": "msg2",
+    "chatId": "chat1",
+    "senderId": "user3",
+    "senderName": "Taylor Kim",
+    "text": "Looks great! I especially like the new button styles",
+    "timestamp": 1718035150000,
+    "isRead": false
+  },
+  {
+    "id": "msg3",
+    "chatId": "chat1",
+    "senderId": "user4",
+    "senderName": "Jordan Smith",
+    "text": "Let's review the new design system together this afternoon",
+    "timestamp": 1718035200000,
+    "isRead": false
+  },
+  {
+    "id": "msg4",
+    "chatId": "chat1",
+    "senderId": "user2",
+    "senderName": "Alex Chen",
+    "text": "I've also added a prototype for mobile views",
+    "timestamp": 1718035250000,
+    "isRead": false,
+    "media": {
+      "type": "image",
+      "url": "https://via.placeholder.com/400x300",
+      "name": "mobile-prototype.png",
+      "size": 1240000
+    }
+  },
+  {
+    "id": "msg5",
+    "chatId": "chat1",
+    "senderId": "user3",
+    "senderName": "Taylor Kim",
+    "text": "Nice work! The responsive behavior looks smooth",
+    "timestamp": 1718035300000,
+    "isRead": false
+  },
+  {
+    "id": "msg6",
+    "chatId": "chat2",
+    "senderId": "user5",
+    "senderName": "Riley Johnson",
+    "text": "What frameworks are we considering for the new project?",
+    "timestamp": 1718027800000,
+    "isRead": true
+  },
+  {
+    "id": "msg7",
+    "chatId": "chat2",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "I was thinking about Vue or React",
+    "timestamp": 1718027900000,
+    "isRead": true
+  },
+  {
+    "id": "msg8",
+    "chatId": "chat2",
+    "senderId": "user2",
+    "senderName": "Alex Chen",
+    "text": "I think we should use React for this. It would integrate better with our existing tools",
+    "timestamp": 1718028000000,
+    "isRead": true
+  },
+  {
+    "id": "msg9",
+    "chatId": "chat2",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Good point. React it is then!",
+    "timestamp": 1718028100000,
+    "isRead": true
+  },
+  {
+    "id": "msg10",
+    "chatId": "chat2",
+    "senderId": "user5",
+    "senderName": "Riley Johnson",
+    "text": "Agreed. Let me share some starter templates I've used before",
+    "timestamp": 1718028200000,
+    "isRead": true,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "react-starter-templates.zip",
+      "size": 2560000
+    }
+  },
+  {
+    "id": "msg11",
+    "chatId": "chat3",
+    "senderId": "user6",
+    "senderName": "Sarah Johnson",
+    "text": "Hi Jamie, I've finished the quarterly report",
+    "timestamp": 1717948500000,
+    "isRead": true
+  },
+  {
+    "id": "msg12",
+    "chatId": "chat3",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Great! Can you share it with me?",
+    "timestamp": 1717948600000,
+    "isRead": true
+  },
+  {
+    "id": "msg13",
+    "chatId": "chat3",
+    "senderId": "user6",
+    "senderName": "Sarah Johnson",
+    "text": "Sure, here you go. Let me know if you need any changes",
+    "timestamp": 1717948700000,
+    "isRead": true,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "Q2-2023-Report.pdf",
+      "size": 3450000
+    }
+  },
+  {
+    "id": "msg14",
+    "chatId": "chat3",
+    "senderId": "user1",
+    "senderName": "Jamie Doe",
+    "text": "Thanks! I'll review it this afternoon",
+    "timestamp": 1717948750000,
+    "isRead": true
+  },
+  {
+    "id": "msg15",
+    "chatId": "chat3",
+    "senderId": "user6",
+    "senderName": "Sarah Johnson",
+    "text": "The documents are ready for review. I've also included the presentation slides",
+    "timestamp": 1717948800000,
+    "isRead": false,
+    "media": {
+      "type": "file",
+      "url": "#",
+      "name": "Q2-Presentation.pptx",
+      "size": 5670000
+    }
+  }
+]

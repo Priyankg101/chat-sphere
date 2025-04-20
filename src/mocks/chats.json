@@ -1,0 +1,29 @@
+[
+  {
+    "id": "chat1",
+    "groupName": "Frontend Team",
+    "lastMessage": "Let's review the new design system",
+    "timestamp": 1718035200000,
+    "unreadCount": 3,
+    "avatarUrl": null,
+    "participants": ["user1", "user2", "user3", "user4"]
+  },
+  {
+    "id": "chat2",
+    "groupName": "Project Brainstorm",
+    "lastMessage": "I think we should use React for this",
+    "timestamp": 1718028000000,
+    "unreadCount": 0,
+    "avatarUrl": null,
+    "participants": ["user1", "user2", "user5"]
+  },
+  {
+    "id": "chat3",
+    "groupName": "Sarah Johnson",
+    "lastMessage": "The documents are ready for review",
+    "timestamp": 1717948800000,
+    "unreadCount": 1,
+    "avatarUrl": null,
+    "participants": ["user1", "user6"]
+  }
+]

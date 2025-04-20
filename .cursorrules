@@ -1,0 +1,31 @@
+# Naming Conventions
+
+- Use PascalCase for React component names and their files (e.g., ChatList, ChatList.tsx).
+- Use camelCase for variables, functions, and MUI sx props (e.g., chatList, sendMessage).
+- Use PascalCase for TypeScript interfaces with an I prefix (e.g., IChat, IMessage).
+- Use kebab-case for file and folder names (e.g., src/components, chat-window.tsx).
+- Use UPPER_SNAKE_CASE for constants (e.g., DEFAULT_CHAT_LIMIT).
+- Use camelCase with ai prefix for @xenova/transformers functions (e.g., aiGenerateReplies).
+
+# Code Style
+
+- Always use TypeScript with strict mode enabled.
+- Prefer functional components over class components.
+- Use MUI components for UI, styled with sx prop or theme overrides, avoiding inline CSS.
+- Follow ESLint and Prettier rules (single quotes, 2-space indent, semi-colons).
+
+# Responsive Design
+
+- Design for all screen sizes (mobile, tablet, desktop).
+- Use MUI's Grid, Box, or Stack with responsive props (e.g., xs, sm, md) for layouts.
+- Test components with responsive breakpoints (e.g., useMediaQuery or theme breakpoints).
+- Ensure typography scales appropriately (e.g., smaller font sizes on mobile).
+- Use relative units (%, vw, vh, rem, em) for spacing and sizing where possible.
+- Make navigation mobile-friendly (e.g., collapsible sidebar or hamburger menu).
+- Prioritize touch-friendly interactions (e.g., larger tap targets for buttons).
+
+# General
+
+- Keep code minimal and focused for hackathon efficiency.
+- Write clear, concise comments for complex logic (e.g., AI reply generation).
+- Avoid external backend dependencies; use mock data or local storage.
