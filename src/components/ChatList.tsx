@@ -47,7 +47,7 @@ const ChatList: FC<ChatListProps> = ({
     useState<IChat | null>(null);
 
   // Add debounce timer reference
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Use either the external search query or the local one
   const effectiveSearchQuery = searchQuery || localSearchQuery;

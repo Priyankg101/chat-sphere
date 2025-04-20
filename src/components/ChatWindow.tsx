@@ -389,7 +389,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
     setForwardDialogOpen(false);
   };
 
-  const handleJumpToMessage = (messageId: string, chatId: string) => {
+  const handleJumpToMessage = (chatId: string) => {
     if (selectedChat?.id !== chatId) {
       onSetActiveChat(chatId);
     }

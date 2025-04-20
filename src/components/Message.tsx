@@ -167,7 +167,7 @@ const Message: FC<MessageProps> = ({
   const isProfilePopoverOpen = Boolean(profilePopoverAnchor);
 
   // Add a timeout ref to manage the avatar hover timeout
-  const avatarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const avatarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Add summarization state variables
   const [isSummarizing, setIsSummarizing] = useState(false);

@@ -53,9 +53,8 @@ const SearchResults: FC<SearchResultsProps> = ({
     {}
   );
   const [localQuery, setLocalQuery] = useState(searchQuery);
-
   // Add debounce timer reference
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Search messages when query changes
   useEffect(() => {
