@@ -14,10 +14,13 @@ import {
 } from "@mui/material";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import SearchIcon from "@mui/icons-material/Search";
+import GroupIcon from "@mui/icons-material/Group";
+import PersonIcon from "@mui/icons-material/Person";
 import { IChat } from "../types/chat";
 import { formatDistanceToNow } from "date-fns";
 import NewChatMenu from "./NewChatMenu";
 import { mockUsers } from "../mockData";
+import AvatarPreview from "./AvatarPreview";
 
 interface ChatListProps {
   chats: IChat[];
@@ -37,6 +40,9 @@ const ChatList: FC<ChatListProps> = ({
   onCreateChat,
 }) => {
   const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
+  const [selectedChatForPreview, setSelectedChatForPreview] =
+    useState<IChat | null>(null);
 
   // Use either the external search query or the local one
   const effectiveSearchQuery = searchQuery || localSearchQuery;
@@ -59,6 +65,41 @@ const ChatList: FC<ChatListProps> = ({
     } else {
       return chat.lastMessage.timestamp;
     }
+  };
+
+  // Handle avatar click to open preview
+  const handleAvatarClick = (event: React.MouseEvent, chat: IChat) => {
+    event.stopPropagation(); // Prevent triggering the ListItem click
+    setSelectedChatForPreview(chat);
+    setAvatarPreviewOpen(true);
+  };
+
+  // Find the user data for the chat
+  const getAvatarPreviewData = () => {
+    if (!selectedChatForPreview) return null;
+
+    if (selectedChatForPreview.type === "individual") {
+      // For individual chats, find the other user
+      const otherUserId = selectedChatForPreview.participants.find(
+        (id) => id !== "user1"
+      );
+      if (otherUserId) {
+        const userData = mockUsers.find((user) => user.id === otherUserId);
+        if (userData) {
+          return userData;
+        }
+      }
+    }
+
+    // For group chats or fallback - use chat's own data
+    return {
+      name: selectedChatForPreview.groupName,
+      avatar: selectedChatForPreview.avatar,
+      status: undefined,
+      email: undefined,
+      lastSeen: undefined,
+      isOnline: undefined,
+    };
   };
 
   // Filter chats based on search query
@@ -132,6 +173,9 @@ const ChatList: FC<ChatListProps> = ({
     setLocalSearchQuery(newQuery);
     onSearch(newQuery);
   };
+
+  // Get avatar preview data
+  const previewData = getAvatarPreviewData();
 
   return (
     <Box
@@ -232,13 +276,22 @@ const ChatList: FC<ChatListProps> = ({
                     },
                   }}
                 >
-                  <Avatar
-                    src={chat.avatar}
-                    alt={chat.groupName}
-                    sx={{ bgcolor: "primary.main" }}
-                  >
-                    {chat.groupName.charAt(0)}
-                  </Avatar>
+                  <Tooltip title="View profile">
+                    <Avatar
+                      src={chat.avatar}
+                      alt={chat.groupName}
+                      onClick={(e) => handleAvatarClick(e, chat)}
+                      sx={{
+                        bgcolor: "primary.main",
+                        cursor: "pointer",
+                        "&:hover": {
+                          boxShadow: 2,
+                        },
+                      }}
+                    >
+                      {chat.groupName.charAt(0)}
+                    </Avatar>
+                  </Tooltip>
                 </Badge>
               </ListItemAvatar>
 
@@ -283,6 +336,30 @@ const ChatList: FC<ChatListProps> = ({
                 }
                 secondary={
                   <Box sx={{ display: "flex", alignItems: "center" }}>
+                    {chat.type === "group" && (
+                      <Tooltip title="Group Chat" arrow>
+                        <GroupIcon
+                          fontSize="small"
+                          sx={{
+                            mr: 0.5,
+                            fontSize: "0.9rem",
+                            color: "primary.main",
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                    {chat.type === "individual" && (
+                      <Tooltip title="Direct Message" arrow>
+                        <PersonIcon
+                          fontSize="small"
+                          sx={{
+                            mr: 0.5,
+                            fontSize: "0.9rem",
+                            color: "text.secondary",
+                          }}
+                        />
+                      </Tooltip>
+                    )}
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -338,6 +415,20 @@ const ChatList: FC<ChatListProps> = ({
           </Box>
         )}
       </List>
+
+      {/* Avatar Preview Dialog */}
+      {previewData && (
+        <AvatarPreview
+          open={avatarPreviewOpen}
+          onClose={() => setAvatarPreviewOpen(false)}
+          name={previewData.name}
+          avatar={previewData.avatar}
+          status={previewData.status}
+          email={previewData.email}
+          lastSeen={previewData.lastSeen}
+          isOnline={previewData.isOnline}
+        />
+      )}
 
       <NewChatMenu
         users={mockUsers.filter((user) => user.id !== "user1")} // Exclude current user

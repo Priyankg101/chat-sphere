@@ -30,6 +30,9 @@ import { IMessage, IReaction, MessageStatus } from "../types/message";
 import MediaPreview from "./MediaPreview";
 import ReplyMessageContent from "./ReplyMessageContent";
 import ForwardedMessageInfo from "./ForwardedMessageInfo";
+import AvatarPreview from "./AvatarPreview";
+import UserProfilePopover from "./UserProfilePopover";
+import { mockUsers } from "../mockData";
 
 interface MessageProps {
   message: IMessage;
@@ -41,6 +44,7 @@ interface MessageProps {
   onPinMessage?: (messageId: string, isPinned: boolean) => void;
   isHighlighted?: boolean;
   replyToMessage?: IMessage | null;
+  onStartDirectChat?: (userId: string) => void;
 }
 
 // Define available emoji reactions
@@ -71,22 +75,27 @@ const Message: FC<MessageProps> = ({
   onPinMessage = () => {},
   isHighlighted = false,
   replyToMessage = null,
+  onStartDirectChat = () => {},
 }) => {
   // Use refs for various DOM elements
   const messageRef = useRef<HTMLDivElement>(null);
-  // const textfieldRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   // Hooks for different features
   const [messageStatus, setMessageStatus] = useState<MessageStatus>("sent");
   const [showActions, setShowActions] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  // const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [reactions, setReactions] = useState<IReaction[]>(
     message.reactions || []
   );
 
+  // Avatar preview and profile popover states
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
+  const [profilePopoverAnchor, setProfilePopoverAnchor] =
+    useState<HTMLElement | null>(null);
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+
   // Mobile-specific state
-  // const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchTimer, setTouchTimer] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -108,12 +117,15 @@ const Message: FC<MessageProps> = ({
     users: string[];
   }>({ emoji: "", users: [] });
 
-  // const reactionButtonRef = useRef<HTMLButtonElement>(null);
-
   // Check if reaction details popover should be open
   const reactionDetailsOpen = Boolean(reactionDetailsAnchor);
   // Check if reaction picker should be open
   const open = Boolean(anchorEl);
+  // Check if profile popover is open
+  const isProfilePopoverOpen = Boolean(profilePopoverAnchor);
+
+  // Add a timeout ref to manage the avatar hover timeout
+  const avatarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mock status changes for current user's messages
   useEffect(() => {
@@ -372,15 +384,71 @@ const Message: FC<MessageProps> = ({
     {}
   );
 
+  // Handle avatar click to show the enlarged preview
+  const handleAvatarClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    // Find the user data for the sender
+    const userData = mockUsers.find((user) => user.id === message.senderId);
+    if (userData) {
+      setCurrentUserData(userData);
+      setAvatarPreviewOpen(true);
+    }
+  };
+
+  // Handle avatar hover to show profile details
+  const handleAvatarHover = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile) return; // Don't show popover on mobile
+
+    clearAvatarTimeout();
+
+    // Find the user data for the sender
+    const userData = mockUsers.find((user) => user.id === message.senderId);
+    if (userData) {
+      setCurrentUserData(userData);
+      setProfilePopoverAnchor(event.currentTarget);
+    }
+  };
+
+  const handleAvatarLeave = () => {
+    // Add a small delay before closing the popover
+    // This gives time for the mouse to enter the popover if that's where it's headed
+    avatarTimeoutRef.current = setTimeout(() => {
+      setProfilePopoverAnchor(null);
+    }, 500); // Increased timeout for better user experience
+  };
+
+  const clearAvatarTimeout = () => {
+    if (avatarTimeoutRef.current !== null) {
+      clearTimeout(avatarTimeoutRef.current);
+      avatarTimeoutRef.current = null;
+    }
+  };
+
+  // Handle starting a direct chat with the user
+  const handleStartChat = () => {
+    if (currentUserData) {
+      onStartDirectChat(currentUserData.id);
+      setProfilePopoverAnchor(null); // Close the popover
+    }
+  };
+
+  // Clear any avatar timeouts on unmount
+  useEffect(() => {
+    return () => {
+      clearAvatarTimeout();
+    };
+  }, []);
+
   return (
     <Box
       sx={{
         display: "flex",
-        flexDirection: "row",
+        flexDirection: isCurrentUser ? "row-reverse" : "row",
         alignItems: "flex-start",
-        alignSelf: isCurrentUser ? "flex-end" : "flex-start",
-        maxWidth: { xs: "85%", sm: "70%" },
-        mb: 1,
+        mb: 2,
+        maxWidth: "100%",
+        px: { xs: 1, sm: 2 },
         position: "relative",
       }}
     >
@@ -401,16 +469,32 @@ const Message: FC<MessageProps> = ({
       )}
 
       {!isCurrentUser && (
-        <Avatar
+        <Box
+          ref={avatarRef}
+          onClick={handleAvatarClick}
+          onMouseEnter={handleAvatarHover}
+          onMouseLeave={handleAvatarLeave}
           sx={{
-            width: { xs: 32, sm: 40 },
-            height: { xs: 32, sm: 40 },
-            mr: 1,
-            fontSize: { xs: "0.75rem", sm: "1rem" },
+            cursor: "pointer",
+            borderRadius: "50%",
+            position: "relative",
           }}
         >
-          {message.senderName.substring(0, 1)}
-        </Avatar>
+          <Avatar
+            sx={{
+              width: { xs: 32, sm: 40 },
+              height: { xs: 32, sm: 40 },
+              mr: 1,
+              fontSize: { xs: "0.75rem", sm: "1rem" },
+              transition: "transform 0.2s ease",
+              "&:hover": {
+                transform: "scale(1.05)",
+              },
+            }}
+          >
+            {message.senderName.substring(0, 1)}
+          </Avatar>
+        </Box>
       )}
       <Box
         sx={{
@@ -828,6 +912,33 @@ const Message: FC<MessageProps> = ({
           </SwipeableDrawer>
         )}
       </Box>
+
+      {/* Avatar Preview Dialog */}
+      {currentUserData && (
+        <AvatarPreview
+          open={avatarPreviewOpen}
+          onClose={() => setAvatarPreviewOpen(false)}
+          name={currentUserData.name}
+          avatar={currentUserData.avatar}
+          status={currentUserData.status}
+          email={currentUserData.email}
+          lastSeen={currentUserData.lastSeen}
+          isOnline={currentUserData.isOnline}
+        />
+      )}
+
+      {/* User Profile Popover */}
+      {currentUserData && (
+        <UserProfilePopover
+          open={isProfilePopoverOpen}
+          anchorEl={profilePopoverAnchor}
+          onClose={() => setProfilePopoverAnchor(null)}
+          user={currentUserData}
+          onStartChat={handleStartChat}
+          currentUserId="user1" // Current user ID
+          clearAvatarTimeout={clearAvatarTimeout}
+        />
+      )}
     </Box>
   );
 };

@@ -10,6 +10,7 @@ import {
   Badge,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -28,6 +29,8 @@ import ReplyPreview from "./ReplyPreview";
 import ForwardMessageDialog from "./ForwardMessageDialog";
 import SavedMessages from "./SavedMessages";
 import ChatBackground, { BackgroundType } from "./ChatBackground";
+import AvatarPreview from "./AvatarPreview";
+import { mockUsers } from "../mockData";
 
 interface ChatWindowProps {
   selectedChat?: IChat;
@@ -45,6 +48,7 @@ interface ChatWindowProps {
   onSetActiveChat?: (chatId: string) => void;
   backgroundType?: BackgroundType;
   onHighlightMessage?: (messageId: string) => void;
+  onCreateDirectChat?: (userId: string) => void;
 }
 
 const ChatWindow: FC<ChatWindowProps> = ({
@@ -59,6 +63,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   onSetActiveChat = () => {},
   backgroundType = "solid",
   onHighlightMessage = () => {},
+  onCreateDirectChat = () => {},
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [mediaAttachment, setMediaAttachment] =
@@ -77,6 +82,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const [lastSentMessageId, setLastSentMessageId] = useState<string | null>(
     null
   );
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -386,6 +392,70 @@ const ChatWindow: FC<ChatWindowProps> = ({
     }
   };
 
+  // Handle starting a direct chat with a user from their avatar
+  const handleStartDirectChat = (userId: string) => {
+    if (userId === "user1") return; // Don't create a chat with yourself
+
+    // Check if there's already a direct chat with this user
+    const existingChat = allChats.find(
+      (chat) =>
+        chat.type === "individual" &&
+        chat.participants.includes(userId) &&
+        chat.participants.includes("user1")
+    );
+
+    if (existingChat) {
+      // If a chat already exists, just switch to it
+      onSetActiveChat(existingChat.id);
+    } else {
+      // Otherwise create a new direct chat
+      onCreateDirectChat(userId);
+    }
+  };
+
+  // Function to determine avatar info based on chat type
+  const getChatAvatarInfo = () => {
+    if (!selectedChat) return null;
+
+    if (selectedChat.type === "individual") {
+      // For direct messages, get info of the other user
+      const otherUserId = selectedChat.participants.find(
+        (id) => id !== "user1"
+      );
+      if (otherUserId) {
+        const user = mockUsers.find((user) => user.id === otherUserId);
+        if (user) {
+          return {
+            name: user.name,
+            avatar: user.avatar,
+            status: user.status,
+            email: user.email,
+            lastSeen: user.lastSeen,
+            isOnline: user.isOnline,
+          };
+        }
+      }
+    }
+
+    // For group chats, use the group info
+    return {
+      name: selectedChat.groupName,
+      avatar: selectedChat.avatar,
+      status: undefined,
+      email: undefined,
+      lastSeen: undefined,
+      isOnline: undefined,
+    };
+  };
+
+  // Handle avatar click to open preview
+  const handleAvatarClick = () => {
+    setAvatarPreviewOpen(true);
+  };
+
+  // Get avatar info for preview
+  const avatarInfo = getChatAvatarInfo();
+
   return (
     <Box
       sx={{
@@ -426,43 +496,80 @@ const ChatWindow: FC<ChatWindowProps> = ({
               bgcolor: "background.paper",
             }}
           >
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              {selectedChat.groupName}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+              <Tooltip title="View profile">
+                <Avatar
+                  src={selectedChat.avatar}
+                  alt={selectedChat.groupName}
+                  onClick={handleAvatarClick}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    cursor: "pointer",
+                    mr: 2,
+                    "&:hover": {
+                      boxShadow: 2,
+                    },
+                    bgcolor: "primary.main",
+                  }}
+                >
+                  {selectedChat.groupName.charAt(0)}
+                </Avatar>
+              </Tooltip>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                {selectedChat.groupName}
+              </Typography>
+            </Box>
 
-            <IconButton
-              onClick={handleOpenSavedMessages}
-              sx={{
-                color: "text.secondary",
-                "&:hover": { color: "#FFC107" },
-                mr: 1,
-              }}
-            >
-              <Badge
-                badgeContent={savedMessagesCount}
-                color="primary"
+            <Box sx={{ marginLeft: "auto", display: "flex" }}>
+              <IconButton
+                onClick={handleOpenSavedMessages}
                 sx={{
-                  "& .MuiBadge-badge": {
-                    fontSize: "0.6rem",
-                    height: "16px",
-                    minWidth: "16px",
-                  },
+                  color: "text.secondary",
+                  "&:hover": { color: "#FFC107" },
+                  mr: 1,
                 }}
               >
-                <BookmarkIcon />
-              </Badge>
-            </IconButton>
+                <Badge
+                  badgeContent={savedMessagesCount}
+                  color="primary"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontSize: "0.6rem",
+                      height: "16px",
+                      minWidth: "16px",
+                    },
+                  }}
+                >
+                  <BookmarkIcon />
+                </Badge>
+              </IconButton>
 
-            <IconButton
-              onClick={handleOpenGroupInfo}
-              sx={{
-                color: "text.secondary",
-                "&:hover": { color: "#26A69A" },
-              }}
-            >
-              <InfoIcon />
-            </IconButton>
+              <IconButton
+                onClick={handleOpenGroupInfo}
+                sx={{
+                  color: "text.secondary",
+                  "&:hover": { color: "#26A69A" },
+                }}
+              >
+                <InfoIcon />
+              </IconButton>
+            </Box>
           </Box>
+
+          {/* Avatar Preview Dialog */}
+          {avatarInfo && (
+            <AvatarPreview
+              open={avatarPreviewOpen}
+              onClose={() => setAvatarPreviewOpen(false)}
+              name={avatarInfo.name}
+              avatar={avatarInfo.avatar}
+              status={avatarInfo.status}
+              email={avatarInfo.email}
+              lastSeen={avatarInfo.lastSeen}
+              isOnline={avatarInfo.isOnline}
+            />
+          )}
 
           {/* Pinned Message Bar */}
           {pinnedMessage && (
@@ -600,6 +707,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
                   isPinned={pinnedMessage?.id === msg.id}
                   isHighlighted={highlightedMessageId === msg.id}
                   replyToMessage={getReplyToMessage(msg.replyToId)}
+                  onStartDirectChat={handleStartDirectChat}
                 />
               </Box>
             ))}

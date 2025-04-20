@@ -336,7 +336,7 @@ function App() {
           </IconButton>
 
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Chat Sphere
+            ChatSphere
           </Typography>
 
           <ProfileSettings
@@ -421,6 +421,30 @@ function App() {
               setTimeout(() => {
                 setHighlightedMessageId(undefined);
               }, 3000);
+            }}
+            onCreateDirectChat={(userId) => {
+              // Find the user to create chat with
+              const user = mockUsers.find((user) => user.id === userId);
+              if (user) {
+                const newChat: IChat = {
+                  id: `new-chat-${Date.now()}`,
+                  type: "individual",
+                  groupName: user.name,
+                  participants: ["user1", userId],
+                  timestamp: Date.now(),
+                  lastMessage: {
+                    text: "Start a conversation",
+                    timestamp: Date.now(),
+                  },
+                  unreadCount: 0,
+                  members: [
+                    { id: "user1", name: "You" },
+                    { id: userId, name: user.name },
+                  ],
+                  avatar: user.avatar,
+                };
+                handleCreateChat(newChat);
+              }
             }}
           />
 
